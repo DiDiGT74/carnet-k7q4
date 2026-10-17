@@ -157,6 +157,46 @@ button:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
 .segwrap .seg{display:inline-flex}
 .segwrap .seg button{white-space:nowrap}
 
+
+/* Alertes et bilans (cloche) */
+.topr{display:flex;align-items:center;gap:12px;min-width:0}
+.topr .status{min-width:0}.topr .status span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bell{position:relative;width:38px;height:38px;border:0;border-radius:12px;background:var(--aubergine);display:grid;place-items:center;flex:none;transition:background 140ms ease,transform 140ms var(--ease-out)}
+.bell:active{transform:scale(.94)}
+.bell svg{width:19px;height:19px}
+.bell .dot{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--coral);color:#1B1426;font-size:.68rem;font-weight:700;display:grid;place-items:center;box-shadow:0 0 0 2px var(--plum)}
+.inbox{position:fixed;inset:0;z-index:15;background:var(--plum);overflow-y:auto;overscroll-behavior:contain;
+  padding:calc(14px + env(safe-area-inset-top,0px)) max(18px,env(safe-area-inset-right,0px)) calc(28px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));
+  animation:sheetIn 260ms var(--ease-out)}
+@keyframes sheetIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.inbox .in{max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.ihead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ihead h2{font-family:var(--display);font-weight:500;font-size:1.05rem;margin:0}
+.iclose{width:38px;height:38px;border:0;border-radius:12px;background:var(--aubergine);font-size:1.2rem;line-height:1}
+.iactions{display:flex;flex-wrap:wrap;gap:8px}
+.pill{border:0;border-radius:999px;padding:8px 14px;background:var(--aubergine);font-size:.82rem;font-weight:600;color:var(--lavender)}
+.pill.main{background:var(--violet);color:#160F24}
+.pill:disabled{opacity:.5}
+.pushinfo{color:var(--mist);font-size:.8rem;line-height:1.45;margin:-6px 0 0}
+.nitem{display:grid;grid-template-columns:4px minmax(0,1fr);gap:0 12px;padding:12px 0;border-top:1px solid var(--line)}
+.nitem:first-child{border-top:0}
+.nitem .bar4{border-radius:2px;background:var(--mist)}
+.nitem .nb{display:grid;gap:4px;min-width:0}
+.nmeta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--mist);font-size:.75rem}
+.nmeta .lvl{font-weight:700;letter-spacing:.03em;text-transform:uppercase;font-size:.66rem}
+.ntitle{font-weight:700;font-size:.95rem;line-height:1.35;display:flex;gap:8px;align-items:flex-start}
+.ntitle i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--violet);margin-top:6px}
+.nitem.read .ntitle{font-weight:600;color:#D6CCEA}
+.nitem.read .ntitle i{visibility:hidden}
+.nmsg{color:#CFC5E2;font-size:.86rem;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+.nmsg.open{-webkit-line-clamp:unset;display:block}
+.nitem.ras{opacity:.55}
+.lv-urgent .bar4{background:var(--coral)}.lv-urgent .lvl{color:var(--coral)}
+.lv-important .bar4{background:#FFB36B}.lv-important .lvl{color:#FFB36B}
+.lv-surveiller .bar4{background:#F2D16B}.lv-surveiller .lvl{color:#F2D16B}
+.lv-info .bar4{background:var(--violet-soft)}.lv-info .lvl{color:var(--violet-soft)}
+.empty{color:var(--mist);font-size:.88rem;text-align:center;padding:30px 0}
+
 /* Mode discret : montants floutés, part d'Antoine retirée */
 .private .money{filter:blur(10px);user-select:none}
 .private .antoine{display:none!important}
@@ -207,7 +247,10 @@ button:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
 <main class="app" id="app">
   <header class="top">
     <div class="brand">Crypto de poche</div>
-    <div class="status" id="status"><i></i><span id="asof">Chargement</span></div>
+    <div class="topr">
+      <div class="status" id="status"><i></i><span id="asof">Chargement</span></div>
+      <button class="bell" id="bell" type="button" aria-label="Alertes et bilans"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot" id="bellDot" hidden></span></button>
+    </div>
   </header>
 
   <nav class="tabs" id="tabs" role="tablist" aria-label="Volets">
@@ -344,6 +387,19 @@ button:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
     </section>
   </div>
 </main>
+
+
+<section class="inbox" id="inbox" hidden role="dialog" aria-modal="true" aria-labelledby="inboxTitle">
+  <div class="in">
+    <div class="ihead"><h2 id="inboxTitle">Alertes et bilans</h2><button class="iclose" id="inboxClose" type="button" aria-label="Fermer">✕</button></div>
+    <div class="iactions">
+      <button class="pill" id="readAll" type="button">Tout marquer comme lu</button>
+      <button class="pill main" id="pushBtn" type="button" hidden>Activer les notifications</button>
+    </div>
+    <p class="pushinfo" id="pushInfo"></p>
+    <div id="nlist"></div>
+  </div>
+</section>
 
 <nav class="bar" aria-label="Actions">
   <div class="in">
@@ -779,6 +835,93 @@ async function loadPatri(force, btn){
 }
 function prefetch(){ if (!KEY()) return; loadBourse(false).then(() => loadPatri(false)); }
 
+
+// ---------- Alertes et bilans (onglet Notifs du Sheet) ----------
+let nData = null, inboxWanted = /notifs/.test(location.hash);
+const LV = {urgent:"Urgent", important:"Important", surveiller:"Surveiller", info:"Info", ras:"RAS"};
+const lvKey = l => { const k = String(l || "").toLowerCase(); return LV[k] ? k : "info"; };
+function idb(){ return new Promise((res, rej) => { const r = indexedDB.open("cdp-owner", 1); r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+async function idbSet(k, v){ try{ const db = await idb(); await new Promise((res, rej) => { const t = db.transaction("kv", "readwrite"); t.objectStore("kv").put(v, k); t.oncomplete = res; t.onerror = () => rej(t.error); }); }catch(_){} }
+function whenTxt(t){
+  if (!t) return "";
+  const d = new Date(t), now = new Date(), y = new Date(now); y.setDate(now.getDate() - 1);
+  const hm = d.toLocaleTimeString("fr-FR", {hour:"2-digit", minute:"2-digit"});
+  if (d.toDateString() === now.toDateString()) return "aujourd'hui " + hm;
+  if (d.toDateString() === y.toDateString()) return "hier " + hm;
+  return d.toLocaleDateString("fr-FR", {day:"numeric", month:"short"}) + " " + hm;
+}
+function setBadge(n){
+  const dot = $("bellDot"); dot.hidden = !n; dot.textContent = n > 9 ? "9+" : String(n || "");
+  $("bell").setAttribute("aria-label", n ? `Alertes et bilans, ${n} non lu${n > 1 ? "s" : ""}` : "Alertes et bilans");
+  try{ if (navigator.setAppBadge){ n ? navigator.setAppBadge(n) : navigator.clearAppBadge(); } }catch(_){}
+}
+function renderNotifs(d){
+  nData = d; setBadge(d.unread || 0);
+  const items = d.items || [];
+  $("readAll").disabled = !items.some(n => !n.read);
+  $("nlist").innerHTML = items.length ? items.map(n => {
+    const k = lvKey(n.lvl);
+    return `<article class="nitem lv-${k}${n.read ? " read" : ""}${k === "ras" ? " ras" : ""}"><span class="bar4"></span><div class="nb">
+      <div class="nmeta"><span class="lvl">${esc(LV[k])}</span><span>${esc(n.src)}</span><span>${esc(whenTxt(n.t))}</span></div>
+      <div class="ntitle"><i aria-hidden="true"></i><span>${esc(n.title)}</span></div>
+      ${n.msg ? `<div class="nmsg money">${esc(n.msg)}</div>` : ""}</div></article>`;
+  }).join("") : '<p class="empty">Rien pour l\'instant. La veille, les bilans et les revues arriveront ici.</p>';
+}
+async function loadNotifs(){
+  if (!KEY()) return;
+  try{ const d = await api("notifs"); renderNotifs(d); ls.set("lastNotifs", JSON.stringify(d)); }catch(_){}
+}
+function pushState(){
+  const btn = $("pushBtn"), info = $("pushInfo");
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)){
+    btn.hidden = true; info.textContent = "Pour recevoir les alertes en notification, installe l'appli sur l'écran d'accueil puis rouvre-la depuis l'icône."; return;
+  }
+  const p = Notification.permission;
+  if (p === "granted" && ls.get("pushOn") === "1"){ btn.hidden = false; btn.textContent = "Notifications activées"; btn.disabled = true; info.textContent = "Tu reçois une notification à chaque alerte ou bilan. Le titre ne contient jamais de montant."; }
+  else if (p === "denied"){ btn.hidden = true; info.textContent = "Les notifications sont bloquées pour cette appli. Réautorise-les dans les réglages du téléphone (notifications de l'appli), puis reviens ici."; }
+  else { btn.hidden = false; btn.disabled = false; btn.textContent = "Activer les notifications"; info.textContent = "Active-les pour être prévenu sur ce téléphone, même appli fermée."; }
+}
+const b64uBytes = s => { const b = atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)); return Uint8Array.from(b, c => c.charCodeAt(0)); };
+async function enablePush(){
+  const btn = $("pushBtn"); btn.disabled = true; btn.textContent = "Activation…";
+  try{
+    const perm = await Notification.requestPermission();
+    if (perm !== "granted"){ pushState(); return; }
+    const reg = await navigator.serviceWorker.ready;
+    const {pub} = await api("vapid");
+    let sub = await reg.pushManager.getSubscription();
+    if (sub && ls.get("pushKey") !== pub){ await sub.unsubscribe(); sub = null; }
+    if (!sub) sub = await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: b64uBytes(pub)});
+    await idbSet("apiKey", KEY()); await idbSet("api", API);
+    await api("sub", {endpoint: sub.endpoint});
+    ls.set("pushOn", "1"); ls.set("pushKey", pub);
+  }catch(e){ note("Notifications : " + e.message, true); ls.set("pushOn", "0"); }
+  pushState();
+}
+function openInbox(){
+  inboxWanted = false; $("inbox").hidden = false; document.body.style.overflow = "hidden";
+  pushState(); if (nData) renderNotifs(nData); loadNotifs();
+  if (location.hash) history.replaceState(null, "", location.pathname);
+}
+function closeInbox(){ $("inbox").hidden = true; document.body.style.overflow = ""; }
+$("bell").onclick = openInbox;
+$("inboxClose").onclick = closeInbox;
+$("pushBtn").onclick = enablePush;
+$("readAll").onclick = async () => {
+  const b = $("readAll"); b.disabled = true;
+  if (nData){ nData.items.forEach(n => n.read = true); nData.unread = 0; renderNotifs(nData); }
+  try{ const d = await api("lu", {rows: []}); renderNotifs(d); ls.set("lastNotifs", JSON.stringify(d)); }catch(e){ note(e.message, true); }
+};
+$("nlist").addEventListener("click", e => { const m = e.target.closest(".nmsg"); if (m) m.classList.toggle("open"); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("inbox").hidden) closeInbox(); });
+if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", e => { if (e.data && e.data.open === "notifs"){ if (started) openInbox(); else inboxWanted = true; } });
+function startNotifs(){
+  try{ const c = ls.get("lastNotifs"); if (c) renderNotifs(JSON.parse(c)); }catch(_){}
+  if (ls.get("pushOn") === "1"){ idbSet("apiKey", KEY()); idbSet("api", API); }
+  loadNotifs();
+  if (inboxWanted) openInbox();
+}
+
 // Mode discret
 const EYE_OPEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 const EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.6 5.1A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-2.6 3.5M6.6 6.6C3.8 8.3 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><line x1="3" y1="3" x2="21" y2="21"/></svg>';
@@ -803,6 +946,7 @@ function unlock(){
   try{ const cp = ls.get("lastPatri"); if (cp) renderPatri(JSON.parse(cp)); }catch(_){}
   if (!KEY()){ note("Cette appli n'est pas encore reliée à ton Sheet. Ouvre une fois le lien d'installation que Claude t'a donné.", true); return; }
   load(false).then(prefetch);
+  startNotifs();
 }
 // Le code n'est enregistré que sur ce téléphone (empreinte salée), jamais dans le code de l'appli.
 let firstPin = null;
@@ -837,6 +981,7 @@ if (ss.get("unlocked") === "1") unlock();
 // Revenir sur l'appli après un moment : on rafraîchit si les prix ont plus de 2 minutes.
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && started && KEY() && (!lastPrices || Date.now() - lastPrices.at > 120000)) load(false);
+  if (document.visibilityState === "visible" && started && KEY()) loadNotifs();
 });
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
