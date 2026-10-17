@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#1B1426">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex, nofollow">
+<title>Crypto de poche</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
+<style>
+/* Crypto de poche — la cagnotte au centre, tout le reste au calme autour. */
+:root{
+  --plum:#1B1426; --aubergine:#261C35; --aubergine-2:#31253F; --line:#3A2E4A;
+  --lavender:#EDE6FA; --mist:#A99DBE; --violet:#9B7BFF; --violet-soft:#CDBDFF;
+  --mint:#5FD3A0; --coral:#FF7A85;
+  --ease-out:cubic-bezier(0.23,1,0.32,1);
+  --ease-in-out:cubic-bezier(0.77,0,0.175,1);
+  --sans:"Manrope","Segoe UI",system-ui,sans-serif;
+  --display:"Unbounded","Manrope",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;overscroll-behavior:none;background:var(--plum)}
+body{margin:0;min-height:100dvh;background:radial-gradient(120% 60% at 50% -10%,#2E1F47 0%,rgba(27,20,38,0) 60%) no-repeat,var(--plum);color:var(--lavender);font-family:var(--sans);font-size:15px;line-height:1.45;font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:pointer}
+button:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
+[hidden]{display:none!important}
+
+.app{max-width:480px;margin:0 auto;
+  padding:calc(14px + env(safe-area-inset-top,0px)) max(18px,env(safe-area-inset-right,0px)) calc(104px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));
+  display:flex;flex-direction:column;gap:26px}
+
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.brand{font-family:var(--display);font-weight:500;font-size:.95rem;letter-spacing:.01em}
+.status{display:flex;align-items:center;gap:7px;color:var(--mist);font-size:.8rem}
+.status i{width:7px;height:7px;border-radius:50%;background:var(--mist)}
+.status.live i{background:var(--mint)}
+
+/* La cagnotte */
+.pot{display:grid;justify-items:center;gap:14px;padding-top:4px}
+.ring{position:relative;width:min(78vw,300px);aspect-ratio:1;max-width:100%;isolation:isolate}
+.ring::before{content:"";position:absolute;inset:-28%;z-index:-1;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(155,123,255,.38),rgba(155,123,255,.12) 55%,transparent 75%),
+             radial-gradient(closest-side at 70% 25%,rgba(255,138,214,.22),transparent 70%);
+  filter:blur(8px);opacity:0;transform:scale(.92);transition:opacity 900ms var(--ease-out),transform 900ms var(--ease-out)}
+.ring.on::before{opacity:1;transform:scale(1)}
+.ring svg{filter:drop-shadow(0 0 10px rgba(155,123,255,.45))}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .arc{fill:none;stroke-linecap:round;transition:stroke-dashoffset 900ms var(--ease-out)}
+.ring .center{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:6px;text-align:center}
+.total{font-family:var(--display);font-weight:600;font-size:clamp(1.9rem,9vw,2.45rem);letter-spacing:-.02em;line-height:1;background:linear-gradient(180deg,#FFFFFF,#D9CCFF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.perf{font-weight:600;font-size:.95rem}
+.sub{color:var(--mist);font-size:.8rem}
+.up{color:var(--mint)} .down{color:var(--coral)}
+
+.split{width:100%;display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:baseline}
+.split .who{display:flex;align-items:center;gap:8px;color:var(--mist);font-size:.88rem}
+.split .who b{width:10px;height:10px;border-radius:3px;display:inline-block}
+.split .amt{font-weight:600;font-size:1.05rem;text-align:right}
+.split .row{display:contents}
+.day{color:var(--mist);font-size:.85rem;text-align:center}
+
+/* Courbe */
+.curve h2,.block h2{font-size:.95rem;font-weight:600;margin:0 0 10px}
+.curve svg{display:block;width:100%;height:auto;overflow:visible}
+
+/* Actifs */
+.block{display:flex;flex-direction:column}
+.asset{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:12px 0;border-top:1px solid var(--line)}
+.asset:first-of-type{border-top:0}
+.enter .asset,.enter .income{opacity:0;transform:translateY(8px);animation:rise 320ms var(--ease-out) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+.asset .sym{font-weight:700;font-size:.98rem}
+.asset .px{color:var(--mist);font-size:.8rem}
+.asset .val{text-align:right;font-weight:600}
+.asset .pl{text-align:right;font-size:.8rem}
+.weight{grid-column:1/-1;position:relative;height:6px;border-radius:3px;background:var(--aubergine-2);margin-top:6px}
+.weight span{position:absolute;inset:0 auto 0 0;border-radius:3px;background:var(--violet)}
+.weight em{position:absolute;top:-3px;width:2px;height:12px;border-radius:1px;background:var(--lavender)}
+.weight.over span{background:var(--violet-soft)}
+.wnote{grid-column:1/-1;display:flex;justify-content:space-between;color:var(--mist);font-size:.75rem;margin-top:3px}
+.legend{color:var(--mist);font-size:.78rem;margin:-4px 0 6px}
+.legend em{display:inline-block;width:2px;height:10px;background:var(--lavender);vertical-align:-1px;margin:0 4px 0 2px}
+
+.income{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--line);font-size:.92rem}
+.income:first-of-type{border-top:0}
+.income.sum{font-weight:700;color:var(--violet-soft)}
+
+.note{background:var(--aubergine);border-radius:14px;padding:12px 14px;font-size:.88rem;color:var(--lavender)}
+.note.err{color:var(--coral)}
+
+/* Barre d'actions */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:rgba(27,20,38,.9);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);
+  padding:10px max(18px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px))}
+.bar .in{max-width:480px;margin:0 auto;display:grid;grid-template-columns:52px 1fr 1.25fr;gap:10px}
+.btn{border:0;border-radius:16px;padding:14px 12px;background:var(--aubergine);font-weight:600;font-size:.92rem;transition:transform 140ms var(--ease-out),background 140ms ease}
+.btn:active{transform:scale(.97)}
+.btn.main{background:var(--violet);color:#160F24}
+.btn:disabled{opacity:.55}
+.btn .lbl{display:inline-block;transition:filter 200ms ease,opacity 200ms ease}
+.btn.busy .lbl{filter:blur(2px);opacity:.6}
+#eye{display:grid;place-items:center;padding:0}
+#eye svg{width:22px;height:22px}
+@media (hover:hover) and (pointer:fine){.btn:hover{background:var(--aubergine-2)}.btn.main:hover{background:#A98DFF}}
+
+/* Mode discret : montants floutés, part d'Antoine retirée */
+.private .money{filter:blur(10px);user-select:none}
+.private .antoine{display:none!important}
+
+/* Verrou */
+.lock{position:fixed;inset:0;z-index:20;background:radial-gradient(90% 55% at 50% 0%,#33224F 0%,rgba(27,20,38,0) 65%) no-repeat,var(--plum);transition:opacity 220ms var(--ease-out),transform 220ms var(--ease-out);display:grid;place-items:center;
+  padding:calc(24px + env(safe-area-inset-top,0px)) 24px calc(24px + env(safe-area-inset-bottom,0px))}
+.lock.out{opacity:0;transform:scale(1.04);pointer-events:none}
+.lockbox{width:100%;max-width:300px;display:grid;justify-items:center;gap:22px}
+.lockbox .brand{font-size:1.1rem}
+.dots{display:flex;gap:16px}
+.dots span{width:13px;height:13px;border-radius:50%;border:2px solid var(--violet);transition:background 120ms ease}
+.dots span.on{background:var(--violet)}
+.lockmsg{min-height:1.3em;font-size:.88rem;color:var(--coral);text-align:center}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:100%}
+.pad button{aspect-ratio:1;border:0;border-radius:50%;background:var(--aubergine);font-family:var(--display);font-weight:500;font-size:1.4rem;transition:transform 120ms var(--ease-out),background 120ms ease}
+.pad button:active{transform:scale(.94);background:var(--aubergine-2)}
+.pad .ghost{visibility:hidden}
+.shake{animation:shake 280ms var(--ease-out)}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+@media (prefers-reduced-motion:reduce){
+  .ring .arc,.ring::before{transition:none}
+  .enter .asset,.enter .income{animation:none;opacity:1;transform:none}
+  .shake{animation:none}
+  .btn,.pad button{transition:background 140ms ease}
+  .btn:active,.pad button:active{transform:none}
+}
+</style>
+</head>
+<body>
+
+<div class="lock" id="lock">
+  <div class="lockbox">
+    <div class="brand">Crypto de poche</div>
+    <div class="sub" id="lockhint">Entre ton code</div>
+    <div class="dots" id="dots"><span></span><span></span><span></span><span></span></div>
+    <div class="lockmsg" id="lockmsg" role="alert"></div>
+    <div class="pad" id="pad">
+      <button type="button">1</button><button type="button">2</button><button type="button">3</button>
+      <button type="button">4</button><button type="button">5</button><button type="button">6</button>
+      <button type="button">7</button><button type="button">8</button><button type="button">9</button>
+      <button type="button" class="ghost" tabindex="-1" aria-hidden="true">0</button><button type="button">0</button><button type="button" aria-label="Effacer">⌫</button>
+    </div>
+  </div>
+</div>
+
+<main class="app" id="app">
+  <header class="top">
+    <div class="brand">Crypto de poche</div>
+    <div class="status" id="status"><i></i><span id="asof">Chargement</span></div>
+  </header>
+
+  <div class="note" id="note" hidden role="status"></div>
+
+  <section class="pot" aria-label="La cagnotte">
+    <div class="ring">
+      <svg viewBox="0 0 120 120" aria-hidden="true">
+        <circle cx="60" cy="60" r="52" fill="none" stroke="#31253F" stroke-width="9"/>
+        <defs>
+          <linearGradient id="gNous" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C5CFF"/><stop offset=".55" stop-color="#A98DFF"/><stop offset="1" stop-color="#F29BDB"/></linearGradient>
+        </defs>
+        <circle id="arcNous" class="arc" cx="60" cy="60" r="52" stroke="url(#gNous)" stroke-width="9"/>
+        <circle id="arcAnt" class="arc antoine" cx="60" cy="60" r="52" stroke="#CDBDFF" stroke-width="9"/>
+      </svg>
+      <div class="center">
+        <div class="sub">Cagnotte</div>
+        <div class="total money" id="total">—</div>
+        <div class="perf" id="perf"></div>
+        <div class="sub money" id="usd"></div>
+      </div>
+    </div>
+    <div class="split">
+      <div class="row"><div class="who"><b style="background:var(--violet)"></b>Nous, après impôt</div><div class="amt money" id="nous">—</div></div>
+      <div class="row antoine"><div class="who"><b style="background:var(--violet-soft)"></b><span id="antLabel">Antoine, après impôt</span></div><div class="amt money" id="antoine">—</div></div>
+    </div>
+    <div class="day" id="day"></div>
+  </section>
+
+  <section class="curve">
+    <h2>Évolution</h2>
+    <div id="chart"></div>
+  </section>
+
+  <section class="block">
+    <h2>Actifs</h2>
+    <p class="legend">La barre montre le poids actuel, le trait <em></em>la cible du plan.</p>
+    <div id="assets"></div>
+  </section>
+
+  <section class="block">
+    <h2>Revenus passifs par an</h2>
+    <div id="passive"></div>
+  </section>
+</main>
+
+<nav class="bar" aria-label="Actions">
+  <div class="in">
+    <button class="btn" id="eye" type="button" aria-label="Masquer les montants"></button>
+    <button class="btn" id="refresh" type="button"><span class="lbl">Rafraîchir</span></button>
+    <button class="btn main" id="save" type="button"><span class="lbl">Enregistrer le point</span></button>
+  </div>
+</nav>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycby33LSmcw3XtsbNxk4ve7j_vEHCRixZAF0OhDiSj6IETx-OiXAPokP0ilNBUIE5hQRX/exec";
+const PIN_HASH = "c1410f04370655b631022026f7fbf8af2e1f493b74c346d3478a3c3ab66addfa";
+const COINS = {BTC:"bitcoin",SOL:"solana",LINK:"chainlink",HYPE:"hyperliquid",SUI:"sui",ETH:"ethereum",ADA:"cardano",FET:"fetch-ai",RENDER:"render-token",CRO:"crypto-com-chain",USDC:"usd-coin"};
+
+const $ = id => document.getElementById(id);
+const ls = {get:k=>{try{return localStorage.getItem(k)}catch(_){return null}}, set:(k,v)=>{try{localStorage.setItem(k,v)}catch(_){}}};
+const ss = {get:k=>{try{return sessionStorage.getItem(k)}catch(_){return null}}, set:(k,v)=>{try{sessionStorage.setItem(k,v)}catch(_){}}};
+const eur = v => v == null || isNaN(v) ? "—" : Math.round(v).toLocaleString("fr-FR") + " €";
+const usd = (v,d=0) => v == null || isNaN(v) ? "—" : v.toLocaleString("fr-FR",{minimumFractionDigits:d,maximumFractionDigits:d}) + " $";
+const pct = (v,d=1) => v == null || isNaN(v) ? "" : (v>0?"+":v<0?"−":"") + Math.abs(v*100).toLocaleString("fr-FR",{minimumFractionDigits:d,maximumFractionDigits:d}) + " %";
+const tone = v => v == null ? "" : v > 0 ? "up" : v < 0 ? "down" : "";
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const digits = p => p >= 1000 ? 0 : p >= 10 ? 2 : p >= 1 ? 3 : 4;
+
+// Clé d'accès au Sheet : reçue une seule fois par le lien d'installation (#k=...), puis gardée sur le téléphone.
+(function takeKey(){
+  const m = location.hash.match(/k=([A-Za-z0-9_-]{20,})/);
+  if (m){ ls.set("apiKey", m[1]); history.replaceState(null, "", location.pathname); }
+})();
+const KEY = () => ls.get("apiKey");
+
+function note(t, err){ const n = $("note"); if (!t){ n.hidden = true; return; } n.hidden = false; n.textContent = t; n.classList.toggle("err", !!err); }
+
+// ---------- Prix : demandés par le téléphone lui-même ----------
+let lastPrices = null;
+async function phonePrices(force){
+  if (!force && lastPrices && Date.now() - lastPrices.at < 60000) return lastPrices;
+  try{
+    const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 8000);
+    const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=" + Object.values(COINS).join(",") + "&vs_currencies=usd,eur&include_24hr_change=true", {signal: ctl.signal, cache: "no-store"});
+    clearTimeout(t);
+    if (!r.ok) return null;
+    const j = await r.json(), out = {at: Date.now(), p: {}};
+    for (const s in COINS){ const d = j[COINS[s]]; if (d && d.usd) out.p[s] = {usd: d.usd, eur: d.eur, ch: d.usd_24h_change}; }
+    if (Object.keys(out.p).length < 8 || !out.p.BTC || !out.p.BTC.eur) return null;
+    return lastPrices = out;
+  } catch(_){ return null; }
+}
+
+// ---------- Appels au Sheet ----------
+async function api(action, prices){
+  const key = KEY();
+  if (!key) throw new Error("Cette appli n'est pas encore reliée à ton Sheet. Ouvre une fois le lien d'installation que Claude t'a donné.");
+  let r;
+  if (action === "save"){
+    r = await fetch(API, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({k:key, a:"save", p:prices})});
+  } else {
+    const q = new URLSearchParams({k:key, a:"data"});
+    if (prices) q.set("p", JSON.stringify(prices));
+    r = await fetch(API + "?" + q.toString(), {cache:"no-store"});
+  }
+  if (!r.ok) throw new Error("Le Sheet ne répond pas (code " + r.status + "). Réessaie dans un instant.");
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error === "clé refusée" ? "Clé refusée par le Sheet. Rouvre le lien d'installation." : j.error);
+  return j.data;
+}
+
+// ---------- Affichage ----------
+const C = 2 * Math.PI * 52;
+function ring(partNous, partAnt){
+  const gap = partAnt > 0.004 ? 0.012 : 0;
+  const n = $("arcNous"), a = $("arcAnt");
+  n.style.strokeDasharray = C; a.style.strokeDasharray = C;
+  const nLen = Math.max(0, partNous - gap) * C, aLen = Math.max(0, partAnt - gap) * C;
+  requestAnimationFrame(() => {
+    n.style.strokeDashoffset = C - nLen;
+    a.style.strokeDashoffset = C - aLen;
+    a.style.transform = `rotate(${partNous * 360}deg)`; a.style.transformOrigin = "60px 60px";
+  });
+}
+$("arcNous").style.strokeDasharray = C; $("arcNous").style.strokeDashoffset = C;
+$("arcAnt").style.strokeDasharray = C; $("arcAnt").style.strokeDashoffset = C;
+
+function chart(hist, now){
+  const pts = hist.slice(); if (now != null) pts.push({d:"maintenant", v:now, live:true});
+  if (pts.length < 2){ $("chart").innerHTML = '<p class="sub">La courbe apparaîtra après quelques points enregistrés.</p>'; return; }
+  const W=440,H=150,pt=18,pb=22;
+  const vs=pts.map(p=>p.v), mn=Math.min(...vs), mx=Math.max(...vs), sp=(mx-mn)||1, lo=mn-sp*.2, hi=mx+sp*.15;
+  const x=i=>i*W/(pts.length-1), y=v=>pt+(hi-v)*(H-pt-pb)/(hi-lo);
+  const n=pts.length, hN = now!=null ? n-1 : n;
+  const line=(a,b)=>pts.slice(a,b).map((p,i)=>`${i?"L":"M"}${x(a+i).toFixed(1)},${y(p.v).toFixed(1)}`).join("");
+  const solid=line(0,hN), area=solid+`L${x(hN-1).toFixed(1)},${H-pb}L0,${H-pb}Z`, dash= now!=null ? line(hN-1,n) : "";
+  const last=pts[n-1];
+  $("chart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Évolution de la cagnotte en euros">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9B7BFF" stop-opacity=".32"/><stop offset="1" stop-color="#9B7BFF" stop-opacity="0"/></linearGradient></defs>
+    <path d="${area}" fill="url(#g)"/>
+    <path d="${solid}" fill="none" stroke="#9B7BFF" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    ${dash?`<path d="${dash}" fill="none" stroke="#9B7BFF" stroke-width="2" stroke-dasharray="3 5" stroke-linecap="round"/>`:""}
+    <circle cx="${x(n-1)}" cy="${y(last.v)}" r="4.5" fill="${last.live?"#5FD3A0":"#9B7BFF"}"/>
+    <text class="money" x="${x(n-1)}" y="${Math.max(12,y(last.v)-10)}" font-size="12" font-weight="600" fill="#EDE6FA" text-anchor="end" font-family="Manrope, sans-serif">${eur(last.v)}</text>
+    <text x="0" y="${H-4}" font-size="11" fill="#A99DBE" font-family="Manrope, sans-serif">${esc(pts[0].d)}</text>
+    <text x="${W}" y="${H-4}" font-size="11" fill="#A99DBE" text-anchor="end" font-family="Manrope, sans-serif">${esc(last.d)}</text>
+  </svg>`;
+}
+
+let firstShow = true;
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function countUp(el, to){
+  if (reduceMotion || to == null){ el.textContent = eur(to); return; }
+  const t0 = performance.now(), dur = 900, ease = t => 1 - Math.pow(1 - t, 4);
+  const step = now => { const t = Math.min(1, (now - t0) / dur); el.textContent = eur(to * ease(t)); if (t < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function render(d){
+  if (firstShow){ countUp($("total"), d.totEur); } else { $("total").textContent = eur(d.totEur); }
+  const pf = $("perf"); pf.className = "perf " + tone(d.perf); pf.textContent = pct(d.perf) + " depuis le départ";
+  $("usd").textContent = usd(d.totUsd) + ", hors CRO";
+  $("nous").textContent = eur(d.nous);
+  $("antoine").textContent = eur(d.antoine);
+  $("antLabel").textContent = "Antoine (" + (d.partA*100).toLocaleString("fr-FR",{maximumFractionDigits:2}) + " %), après impôt";
+  $("day").innerHTML = d.ch24Pct == null ? "" : `Sur 24 h : <span class="${tone(d.ch24Pct)}">${pct(d.ch24Pct)}</span>`;
+  ring(1 - d.partA, d.partA);
+  document.querySelector(".ring").classList.add("on");
+  chart(d.hist || [], d.totEur);
+
+  const planAssets = d.assets.filter(a => a.plan);
+  const planTot = planAssets.reduce((s,a)=>s+a.plan,0), valTot = planAssets.reduce((s,a)=>s+a.value,0);
+  const scale = Math.max(...planAssets.map(a => Math.max(a.value/valTot, a.plan/planTot)), .01) * 1.1;
+  $("assets").innerHTML = d.assets.map(a => {
+    let w = "";
+    if (a.plan && planTot && valTot){
+      const cur = a.value/valTot, tgt = a.plan/planTot, gap = cur - tgt;
+      w = `<div class="weight${gap>0?" over":""}" aria-hidden="true"><span style="width:${(cur/scale*100).toFixed(1)}%"></span><em style="left:${(tgt/scale*100).toFixed(1)}%"></em></div>
+           <div class="wnote"><span>${(cur*100).toLocaleString("fr-FR",{maximumFractionDigits:1})} % du portefeuille</span><span>cible ${(tgt*100).toLocaleString("fr-FR",{maximumFractionDigits:1})} %</span></div>`;
+    }
+    const sub = a.sym === "USDC" ? "Liquidités" : a.sym === "CRO" ? "Hors plan, cashback et staking" : usd(a.price, digits(a.price)) + (a.ch!=null ? `, <span class="${tone(a.ch)}">${pct(a.ch/100)} sur 24 h</span>` : "");
+    return `<div class="asset">
+      <div><div class="sym">${esc(a.sym)}</div><div class="px">${sub}</div></div>
+      <div><div class="val money">${usd(a.value)}</div><div class="pl ${tone(a.pct)}">${a.pct==null?"":pct(a.pct)}</div></div>
+      ${w}
+    </div>`;
+  }).join("");
+
+  const doStagger = firstShow;
+  $("passive").innerHTML = (d.passive||[]).map((p,i,arr)=>`<div class="income${i===arr.length-1?" sum":""}"><span>${esc(p.name)}</span><span class="money ${p.year<0&&i<arr.length-1?"down":""}">${eur(p.year)}</span></div>`).join("");
+
+  if (doStagger){
+    const app = $("app"); app.classList.add("enter");
+    [...document.querySelectorAll(".asset,.income")].forEach((el,i) => el.style.animationDelay = (120 + i*40) + "ms");
+    setTimeout(() => app.classList.remove("enter"), 1600);
+    firstShow = false;
+  }
+  const st = $("status"), hm = d.at ? new Date(d.at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}) : "";
+  if (d.at && !d.stale){ st.classList.add("live"); $("asof").textContent = "Prix en direct, " + hm; }
+  else if (d.at){ st.classList.remove("live"); $("asof").textContent = "Derniers prix du " + new Date(d.at).toLocaleDateString("fr-FR",{day:"numeric",month:"short"}) + ", " + hm; }
+  else { st.classList.remove("live"); $("asof").textContent = "Prix du Sheet"; }
+}
+
+// ---------- Actions ----------
+let busy = false;
+function setBusy(on, btn){
+  busy = on; $("refresh").disabled = $("save").disabled = on;
+  btn && btn.classList.toggle("busy", on);
+}
+async function load(force, btn){
+  if (busy) return; setBusy(true, btn);
+  try{
+    const prices = await phonePrices(force);
+    const d = await api("data", prices);
+    render(d); ls.set("lastData", JSON.stringify(d));
+    note(prices ? null : "CoinGecko n'a pas répondu, les prix viennent du Sheet ou du dernier relevé.", !prices);
+  } catch(e){ note(e.message, true); }
+  finally{ setBusy(false, btn); }
+}
+async function save(){
+  if (busy) return; const btn = $("save"); setBusy(true, btn);
+  try{
+    const prices = await phonePrices(true);
+    if (!prices) throw new Error("Prix en direct indisponibles, point non enregistré. Réessaie dans une minute.");
+    const d = await api("save", prices);
+    render(d); ls.set("lastData", JSON.stringify(d));
+    btn.querySelector(".lbl").textContent = "Point enregistré";
+    note(null);
+    setTimeout(() => { btn.querySelector(".lbl").textContent = "Enregistrer le point"; }, 1800);
+  } catch(e){ note(e.message, true); }
+  finally{ setBusy(false, btn); }
+}
+$("refresh").onclick = () => load(true, $("refresh"));
+$("save").onclick = save;
+
+// Mode discret
+const EYE_OPEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.6 5.1A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-2.6 3.5M6.6 6.6C3.8 8.3 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><line x1="3" y1="3" x2="21" y2="21"/></svg>';
+function setPrivate(on){
+  document.body.classList.toggle("private", on);
+  $("eye").innerHTML = on ? EYE_OFF : EYE_OPEN;
+  $("eye").setAttribute("aria-label", on ? "Afficher les montants" : "Masquer les montants");
+  ls.set("private", on ? "1" : "0");
+}
+$("eye").onclick = () => setPrivate(!document.body.classList.contains("private"));
+setPrivate(ls.get("private") === "1");
+
+// ---------- Code d'accès ----------
+let entry = "", started = false;
+async function sha(s){ const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join(""); }
+function dots(){ [...$("dots").children].forEach((d,i)=>d.classList.toggle("on", i < entry.length)); }
+function unlock(){
+  const L = $("lock"); L.classList.add("out"); setTimeout(() => { L.hidden = true; }, 230); ss.set("unlocked","1");
+  if (started) return; started = true;
+  const cached = ls.get("lastData"); if (cached){ try{ render(JSON.parse(cached)); }catch(_){} }
+  if (!KEY()){ note("Cette appli n'est pas encore reliée à ton Sheet. Ouvre une fois le lien d'installation que Claude t'a donné.", true); return; }
+  load(false);
+}
+async function press(k){
+  if (k === "⌫"){ entry = entry.slice(0,-1); dots(); return; }
+  if (entry.length >= 4) return;
+  entry += k; dots(); $("lockmsg").textContent = "";
+  if (entry.length === 4){
+    if (await sha("crypto-poche:" + entry) === PIN_HASH) return unlock();
+    const d = $("dots"); d.classList.remove("shake"); void d.offsetWidth; d.classList.add("shake");
+    $("lockmsg").textContent = "Code incorrect"; entry = ""; setTimeout(dots, 220);
+  }
+}
+$("pad").addEventListener("pointerdown", e => { const b = e.target.closest("button"); if (b && !b.classList.contains("ghost")){ e.preventDefault(); press(b.textContent.trim()); } });
+$("pad").addEventListener("click", e => { if (e.detail === 0){ const b = e.target.closest("button"); if (b && !b.classList.contains("ghost")) press(b.textContent.trim()); } });
+document.addEventListener("keydown", e => { if ($("lock").hidden) return; if (/^[0-9]$/.test(e.key)) press(e.key); else if (e.key === "Backspace") press("⌫"); });
+if (ss.get("unlocked") === "1") unlock();
+
+// Revenir sur l'appli après un moment : on rafraîchit si les prix ont plus de 2 minutes.
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && started && KEY() && (!lastPrices || Date.now() - lastPrices.at > 120000)) load(false);
+});
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
