@@ -358,7 +358,7 @@ function render(d){
   const frac = d.target && d.target.eur ? d.totEur / d.target.eur : 0;
   $("prog").textContent = frac ? (frac*100).toLocaleString("fr-FR",{maximumFractionDigits:0}) + " %" : "—";
   $("day").innerHTML = d.ch24Pct == null ? "" : `Sur 24 h : <span class="${tone(d.ch24Pct)}">${pct(d.ch24Pct)}</span>`;
-  ring(frac);
+  ring(1); // sa part = tout le cercle ; la progression vers 2030 est affichée en pourcentage
   document.querySelector(".ring").classList.add("on");
   lastData = d; chart(d);
 

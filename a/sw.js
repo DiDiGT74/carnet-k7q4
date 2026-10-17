@@ -1,5 +1,5 @@
 // Garde l'écran de l'appli disponible hors connexion. Les prix et les données ne sont jamais mis en cache.
-const CACHE = "cdpa-v1";
+const CACHE = "cdpa-v2";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "../icon-192.png", "../icon-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener("activate", e => {
