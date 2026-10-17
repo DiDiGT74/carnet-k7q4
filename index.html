@@ -215,7 +215,6 @@ button:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
 
 <script>
 const API = "https://script.google.com/macros/s/AKfycby33LSmcw3XtsbNxk4ve7j_vEHCRixZAF0OhDiSj6IETx-OiXAPokP0ilNBUIE5hQRX/exec";
-const PIN_HASH = "c1410f04370655b631022026f7fbf8af2e1f493b74c346d3478a3c3ab66addfa";
 const COINS = {BTC:"bitcoin",SOL:"solana",LINK:"chainlink",HYPE:"hyperliquid",SUI:"sui",ETH:"ethereum",ADA:"cardano",FET:"fetch-ai",RENDER:"render-token",CRO:"crypto-com-chain",USDC:"usd-coin"};
 
 const $ = id => document.getElementById(id);
@@ -231,7 +230,8 @@ const digits = p => p >= 1000 ? 0 : p >= 10 ? 2 : p >= 1 ? 3 : 4;
 // Clé d'accès au Sheet : reçue une seule fois par le lien d'installation (#k=...), puis gardée sur le téléphone.
 (function takeKey(){
   const m = location.hash.match(/k=([A-Za-z0-9_-]{20,})/);
-  if (m){ ls.set("apiKey", m[1]); history.replaceState(null, "", location.pathname); }
+  // Nouveau lien de liaison : on repart avec un nouveau code (c'est aussi la marche à suivre en cas d'oubli).
+  if (m){ ls.set("apiKey", m[1]); try{ localStorage.removeItem("pinHash"); localStorage.removeItem("pinSalt"); }catch(_){} history.replaceState(null, "", location.pathname); }
 })();
 const KEY = () => ls.get("apiKey");
 
@@ -417,16 +417,31 @@ function unlock(){
   if (!KEY()){ note("Cette appli n'est pas encore reliée à ton Sheet. Ouvre une fois le lien d'installation que Claude t'a donné.", true); return; }
   load(false);
 }
+// Le code n'est enregistré que sur ce téléphone (empreinte salée), jamais dans le code de l'appli.
+let firstPin = null;
+const hasPin = () => !!ls.get("pinHash");
+function lockHint(){ $("lockhint").textContent = hasPin() ? "Entre ton code" : (firstPin ? "Confirme ton code" : "Choisis ton code à 4 chiffres"); }
+function fail(msg){
+  const d = $("dots"); d.classList.remove("shake"); void d.offsetWidth; d.classList.add("shake");
+  $("lockmsg").textContent = msg; entry = ""; setTimeout(dots, 220);
+}
 async function press(k){
   if (k === "⌫"){ entry = entry.slice(0,-1); dots(); return; }
   if (entry.length >= 4) return;
   entry += k; dots(); $("lockmsg").textContent = "";
-  if (entry.length === 4){
-    if (await sha("crypto-poche:" + entry) === PIN_HASH) return unlock();
-    const d = $("dots"); d.classList.remove("shake"); void d.offsetWidth; d.classList.add("shake");
-    $("lockmsg").textContent = "Code incorrect"; entry = ""; setTimeout(dots, 220);
+  if (entry.length < 4) return;
+  if (hasPin()){
+    if (await sha(ls.get("pinSalt") + ":" + entry) === ls.get("pinHash")) return unlock();
+    return fail("Code incorrect");
   }
+  if (!firstPin){ firstPin = entry; entry = ""; setTimeout(() => { dots(); lockHint(); }, 150); return; }
+  if (entry !== firstPin){ firstPin = null; lockHint(); return fail("Les deux codes sont différents, recommence"); }
+  const salt = [...crypto.getRandomValues(new Uint8Array(16))].map(x=>x.toString(16).padStart(2,"0")).join("");
+  ls.set("pinSalt", salt); ls.set("pinHash", await sha(salt + ":" + entry));
+  if (!hasPin()) return fail("Impossible d'enregistrer le code sur ce téléphone");
+  firstPin = null; unlock();
 }
+lockHint();
 $("pad").addEventListener("pointerdown", e => { const b = e.target.closest("button"); if (b && !b.classList.contains("ghost")){ e.preventDefault(); press(b.textContent.trim()); } });
 $("pad").addEventListener("click", e => { if (e.detail === 0){ const b = e.target.closest("button"); if (b && !b.classList.contains("ghost")) press(b.textContent.trim()); } });
 document.addEventListener("keydown", e => { if ($("lock").hidden) return; if (/^[0-9]$/.test(e.key)) press(e.key); else if (e.key === "Backspace") press("⌫"); });
