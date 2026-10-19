@@ -1,5 +1,5 @@
 // Garde l'écran de l'appli disponible hors connexion. Les prix et le Sheet ne sont jamais mis en cache.
-const CACHE = "cdp-v7";
+const CACHE = "cdp-v8";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener("activate", e => {
