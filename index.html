@@ -605,6 +605,8 @@ function chart(d){
     <text x="0" y="${H-6}" font-size="10.5" fill="#A99DBE" font-family="Manrope, sans-serif">${showProj?"":fmtD(t0)}</text>
     ${showProj?"":`<text x="${W}" y="${H-6}" font-size="10.5" fill="#A99DBE" text-anchor="end" font-family="Manrope, sans-serif">aujourd'hui</text>`}
   </svg>`;
+  tipChart("chart", W, H, pts.map(p => ({x: x(p.t), y: y(p.v), v: eur(p.v), d: p.live ? "aujourd'hui" : dLong(p.t)}))
+    .concat(showProj ? proj.filter((p, i) => i && i % 4 === 0).map(p => ({x: x(p.t), y: y(p.v), v: eur(p.v), d: "projection, " + fmtD(p.t, true)})) : []));
   if (showProj){
     const months = Math.max(0, Math.round((saleT - now) / (30.44*864e5)));
     $("goal").innerHTML = `Objectif du plan à la vente (${fmtD(saleT, true)}, dans ${months} mois) : <b class="money">${eur(tgt.eur)}</b>, soit <b class="money">${eur(tgt.nous)}</b> pour nous après impôt<span class="antoine"> et <b class="money">${eur(tgt.antoine)}</b> pour Antoine</span>. Projection aux prix cibles du plan, staking compris, au cours EUR/USD actuel.`;
@@ -741,6 +743,33 @@ const fmtMY = t => { const d = new Date(t); return MONTHS[d.getMonth()] + " " + 
 const monthsTo = t => Math.max(0, (t - Date.now()) / (30.4375*864e5));
 const TXT = 'font-family="Manrope, sans-serif"';
 
+// ---------- Toucher un graphique : valeur et date du point le plus proche ----------
+const dLong = t => new Date(t).toLocaleDateString("fr-FR", {day: "numeric", month: "long", year: "numeric"});
+function tipChart(id, W, H, pts){
+  const svg = $(id) && $(id).querySelector("svg");
+  if (!svg || !pts.length) return;
+  const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  g.setAttribute("class", "tip"); g.setAttribute("pointer-events", "none"); g.style.display = "none"; svg.appendChild(g);
+  const show = ev => {
+    const r = svg.getBoundingClientRect(); if (!r.width) return;
+    const px = (ev.clientX - r.left) / r.width * W;
+    let b = pts[0]; for (const p of pts) if (Math.abs(p.x - px) < Math.abs(b.x - px)) b = p;
+    const w = Math.max(b.v.length * 8.9, b.d.length * 7.3) + 22, h = 48;
+    const bx = Math.max(0, Math.min(W - w, b.x - w/2)), by = b.y - h - 12 < 0 ? b.y + 12 : b.y - h - 12;
+    g.innerHTML = `<line x1="${b.x}" x2="${b.x}" y1="0" y2="${H}" stroke="#EDE6FA" stroke-opacity=".25"/>
+      <circle cx="${b.x}" cy="${b.y}" r="5.5" fill="#1B1426" stroke="#EDE6FA" stroke-width="2"/>
+      <rect x="${bx}" y="${by}" width="${w}" height="${h}" rx="9" fill="#31253F" stroke="#4A3B5E"/>
+      <text class="money" x="${bx + w/2}" y="${by + 21}" font-size="15" font-weight="700" fill="#EDE6FA" text-anchor="middle" font-family="Manrope, sans-serif">${esc(b.v)}</text>
+      <text x="${bx + w/2}" y="${by + 39}" font-size="12.5" fill="#A99DBE" text-anchor="middle" font-family="Manrope, sans-serif">${esc(b.d)}</text>`;
+    g.style.display = "";
+  };
+  svg.style.cursor = "crosshair"; svg.style.touchAction = "pan-y";
+  svg.addEventListener("pointerdown", show);
+  svg.addEventListener("pointermove", e => { if (e.pointerType === "mouse" || e.buttons) show(e); });
+  svg.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") g.style.display = "none"; });
+}
+document.addEventListener("pointerdown", e => document.querySelectorAll("svg .tip").forEach(t => { if (!t.ownerSVGElement.contains(e.target)) t.style.display = "none"; }));
+
 // ---------- Bourse ----------
 let bData = null, bView = ls.get("bView") || "hist";
 const REF = {Adrien:"tes 60 ans", Ella:"18 ans d'Ella", Hugo:"18 ans d'Hugo"};
@@ -802,6 +831,8 @@ function bChart(d){
     ${proj ? "" : `<text class="money" x="${x(nowP.t)}" y="${Math.max(12, y(nowP.v)-10)}" font-size="12" font-weight="600" fill="#EDE6FA" text-anchor="end" ${TXT}>${eur(nowP.v)}</text>
       <text x="0" y="${H-6}" font-size="10.5" fill="#A99DBE" ${TXT}>${fmtMY(t0)}</text><text x="${W}" y="${H-6}" font-size="10.5" fill="#A99DBE" text-anchor="end" ${TXT}>aujourd'hui</text>`}
   </svg>`;
+  tipChart("bChart", W, H, pts.map(p => ({x: x(p.t), y: y(p.v), v: eur(p.v), d: p.live ? "aujourd'hui" : dLong(p.t)}))
+    .concat(proj ? projPts.filter((p, i) => i && i % 4 === 0).map(p => ({x: x(p.t), y: y(p.v), v: eur(p.v), d: "projection, " + fmtMY(p.t)})) : []));
   if (proj){
     const kids = d.accounts.filter(a => a.scope !== "Nous" && a.proj && a.proj.close).sort((a,b) => a.proj.close - b.proj.close)
       .map(a => `${esc(a.holder)} à 18 ans (${fmtMY(a.proj.close)}) : <b class="money">${eur(a.proj.fv)}</b>, soit <b class="money">${eur(a.proj.fnet)}</b> après impôt`).join(". ");
@@ -938,6 +969,7 @@ function cChart(d){
     <circle cx="${x(last.t)}" cy="${y(last.v)}" r="4.5" fill="${sc}"/>
     <text x="0" y="${H-6}" font-size="10.5" fill="#A99DBE" ${TXT}>${dm(t0)}</text><text x="${W}" y="${H-6}" font-size="10.5" fill="#A99DBE" text-anchor="end" ${TXT}>aujourd'hui</text>
   </svg>`;
+  tipChart("cChart", W, H, pts.map(p => ({x: x(p.t), y: y(p.v), v: rateF(p.v), d: p.live ? "aujourd'hui" : dLong(p.t)})));
   $("cGoal").innerHTML = d.seuil != null
     ? `Au-dessus de <b>${rateF(d.seuil)}</b>, le taux est dans les 20 % les plus hauts des 60 derniers jours et au-dessus de sa moyenne 30 jours : c'est le signal « Bon moment ». Les bandes claires sont tes fenêtres de change (25 → 6).`
     : "";
