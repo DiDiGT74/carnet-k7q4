@@ -133,6 +133,14 @@ button:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
 .pad button{aspect-ratio:1;border:0;border-radius:50%;background:var(--aubergine);font-family:var(--display);font-weight:500;font-size:1.4rem;transition:transform 120ms var(--ease-out),background 120ms ease}
 .pad button:active{transform:scale(.94);background:var(--aubergine-2)}
 .pad .ghost{visibility:hidden}
+.dots{gap:12px}
+.biobtn{display:flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:10px 16px;background:var(--aubergine);color:var(--lavender);font-weight:600;font-size:.88rem}
+.biobtn svg{width:20px;height:20px}
+.bioask{display:grid;gap:10px}
+.bioacts{display:flex;gap:8px;flex-wrap:wrap}
+.pill{border:0;border-radius:999px;padding:8px 14px;background:var(--aubergine-2);font-size:.82rem;font-weight:600;color:var(--lavender)}
+.pill.main{background:var(--violet);color:#160F24}
+.pill:disabled{opacity:.5}
 .shake{animation:shake 280ms var(--ease-out)}
 @keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 
@@ -151,7 +159,7 @@ button:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
   <div class="lockbox">
     <div class="brand">Crypto de poche</div>
     <div class="sub" id="lockhint">Entre ton code</div>
-    <div class="dots" id="dots"><span></span><span></span><span></span><span></span></div>
+    <div class="dots" id="dots"></div>
     <div class="lockmsg" id="lockmsg" role="alert"></div>
     <div class="pad" id="pad">
       <button type="button">1</button><button type="button">2</button><button type="button">3</button>
@@ -159,6 +167,7 @@ button:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
       <button type="button">7</button><button type="button">8</button><button type="button">9</button>
       <button type="button" class="ghost" tabindex="-1" aria-hidden="true">0</button><button type="button">0</button><button type="button" aria-label="Effacer">⌫</button>
     </div>
+    <button class="biobtn" id="bioBtn" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 11v3"/><path d="M8.5 7.5A5 5 0 0 1 17 11v2a13 13 0 0 1-1 5"/><path d="M7 11a5 5 0 0 1 .4-2"/><path d="M7 14a14 14 0 0 0 1.5 5"/><path d="M12 17v.5a9 9 0 0 1-1 4"/><path d="M4.5 9A8 8 0 0 1 19 7.5"/><path d="M3.5 13a14 14 0 0 1 0-1.5"/><path d="M20.5 11v1.5a16 16 0 0 1-.5 4"/></svg>Utiliser l'empreinte</button>
   </div>
 </div>
 
@@ -169,6 +178,7 @@ button:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
   </header>
 
   <div class="note" id="note" hidden role="status"></div>
+  <div class="note bioask" id="bioAsk" hidden><span>Déverrouiller l'appli avec ton empreinte plutôt qu'avec le code ?</span><div class="bioacts"><button class="pill main" id="bioYes" type="button">Activer</button><button class="pill" id="bioNo" type="button">Non merci</button></div></div>
 
   <section class="pot" aria-label="Ta part">
     <div class="ring">
@@ -425,46 +435,133 @@ function setPrivate(on){
 $("eye").onclick = () => setPrivate(!document.body.classList.contains("private"));
 setPrivate(ls.get("private") === "1");
 
-// ---------- Code d'accès ----------
+// ---------- Code d'accès (6 chiffres) et empreinte ----------
+// Le code est demandé à chaque ouverture, et au retour dans l'appli après 30 s en arrière-plan.
 let entry = "", started = false;
+const PIN_LEN = 6;
 async function sha(s){ const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join(""); }
-function dots(){ [...$("dots").children].forEach((d,i)=>d.classList.toggle("on", i < entry.length)); }
+// Le code n'est enregistré que sur ce téléphone (empreinte salée), jamais dans le code de l'appli.
+let firstPin = null, migrating = false;
+const hasPin = () => !!ls.get("pinHash");
+const storedLen = () => Number(ls.get("pinLen") || 4); // les anciens codes faisaient 4 chiffres
+const needLen = () => (hasPin() && !migrating) ? storedLen() : PIN_LEN;
+function dots(){
+  const d = $("dots"), n = needLen();
+  if (d.children.length !== n) d.innerHTML = "<span></span>".repeat(n);
+  [...d.children].forEach((x,i) => x.classList.toggle("on", i < entry.length));
+}
+function lockHint(){
+  $("lockhint").textContent = (hasPin() && !migrating) ? "Entre ton code"
+    : firstPin ? "Confirme ton nouveau code"
+    : migrating ? "Choisis ton nouveau code à 6 chiffres" : "Choisis ton code à 6 chiffres";
+}
 function unlock(){
-  const L = $("lock"); L.classList.add("out"); setTimeout(() => { L.hidden = true; }, 230); ss.set("unlocked","1");
-  if (started) return; started = true;
+  const L = $("lock"); L.classList.add("out"); setTimeout(() => { L.hidden = true; }, 230);
+  entry = ""; firstPin = null; migrating = false;
+  if (started){ offerBio(); return; } started = true;
   const cached = ls.get("lastData"); if (cached){ try{ render(JSON.parse(cached)); }catch(_){} }
+  offerBio();
   if (!KEY()){ note("Cette appli n'est pas encore activée. Ouvre une fois le lien qu'Adrien t'a envoyé.", true); return; }
   load(false);
 }
-// Le code n'est enregistré que sur ce téléphone (empreinte salée), jamais dans le code de l'appli.
-let firstPin = null;
-const hasPin = () => !!ls.get("pinHash");
-function lockHint(){ $("lockhint").textContent = hasPin() ? "Entre ton code" : (firstPin ? "Confirme ton code" : "Choisis ton code à 4 chiffres"); }
+function lock(){
+  const L = $("lock"); entry = ""; firstPin = null; migrating = false;
+  $("lockmsg").textContent = ""; lockHint(); dots();
+  L.hidden = false; L.classList.remove("out");
+  tryBio();
+}
 function fail(msg){
   const d = $("dots"); d.classList.remove("shake"); void d.offsetWidth; d.classList.add("shake");
   $("lockmsg").textContent = msg; entry = ""; setTimeout(dots, 220);
 }
 async function press(k){
   if (k === "⌫"){ entry = entry.slice(0,-1); dots(); return; }
-  if (entry.length >= 4) return;
+  if (entry.length >= needLen()) return;
   entry += k; dots(); $("lockmsg").textContent = "";
-  if (entry.length < 4) return;
-  if (hasPin()){
-    if (await sha(ls.get("pinSalt") + ":" + entry) === ls.get("pinHash")) return unlock();
-    return fail("Code incorrect");
+  if (entry.length < needLen()) return;
+  if (hasPin() && !migrating){
+    const wait = Number(ls.get("pinLockUntil") || 0) - Date.now();
+    if (wait > 0) return fail("Trop d'essais, réessaie dans " + Math.ceil(wait/1000) + " s");
+    if (await sha(ls.get("pinSalt") + ":" + entry) !== ls.get("pinHash")){
+      // Blocage après 5 codes faux : 30 s, puis 1 min, 2 min… à chaque nouvelle erreur.
+      const n = Number(ls.get("pinFails") || 0) + 1; ls.set("pinFails", String(n));
+      if (n >= 5){ const s = 30 * Math.pow(2, Math.min(n - 5, 8)); ls.set("pinLockUntil", String(Date.now() + s*1000)); return fail("Trop d'essais, réessaie dans " + s + " s"); }
+      return fail("Code incorrect" + (n >= 3 ? ` (encore ${5 - n} essai${5 - n > 1 ? "s" : ""})` : ""));
+    }
+    ls.set("pinFails", "0"); ls.set("pinLockUntil", "0");
+    if (storedLen() < PIN_LEN){ migrating = true; entry = ""; setTimeout(() => { dots(); lockHint(); }, 150); return; } // passage au code à 6 chiffres
+    return unlock();
   }
   if (!firstPin){ firstPin = entry; entry = ""; setTimeout(() => { dots(); lockHint(); }, 150); return; }
   if (entry !== firstPin){ firstPin = null; lockHint(); return fail("Les deux codes sont différents, recommence"); }
   const salt = [...crypto.getRandomValues(new Uint8Array(16))].map(x=>x.toString(16).padStart(2,"0")).join("");
-  ls.set("pinSalt", salt); ls.set("pinHash", await sha(salt + ":" + entry));
-  if (!hasPin()) return fail("Impossible d'enregistrer le code sur ce téléphone");
-  firstPin = null; unlock();
+  const h = await sha(salt + ":" + entry);
+  ls.set("pinSalt", salt); ls.set("pinHash", h); ls.set("pinLen", String(PIN_LEN));
+  if (ls.get("pinHash") !== h) return fail("Impossible d'enregistrer le code sur ce téléphone");
+  unlock();
 }
-lockHint();
+
+// Empreinte (capteur du téléphone, via WebAuthn) : rien ne quitte le téléphone.
+const b64e = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const b64uBytes = s => { const b = atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)); return Uint8Array.from(b, c => c.charCodeAt(0)); };
+async function bioAvailable(){
+  try{ return !!(window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); }catch(_){ return false; }
+}
+let bioBusy = false;
+async function bioUnlock(){
+  const id = ls.get("bioId");
+  if (!id || bioBusy || $("lock").hidden) return;
+  bioBusy = true;
+  try{
+    const a = await navigator.credentials.get({publicKey: {challenge: crypto.getRandomValues(new Uint8Array(32)), allowCredentials: [{type: "public-key", id: b64uBytes(id), transports: ["internal"]}], userVerification: "required", timeout: 60000}});
+    const flags = a && a.response ? new Uint8Array(a.response.authenticatorData)[32] : 0;
+    if (flags & 0x04) unlock(); // 0x04 : l'utilisateur a bien été vérifié (empreinte ou code du téléphone)
+  }catch(_){ /* annulé : le code reste disponible */ }
+  finally{ bioBusy = false; }
+}
+function tryBio(){
+  const on = !!ls.get("bioId");
+  $("bioBtn").hidden = !on;
+  if (on && document.visibilityState === "visible") setTimeout(bioUnlock, 250);
+}
+async function offerBio(){
+  const box = $("bioAsk");
+  if (ls.get("bioId") || ls.get("bioNo") === "1" || !(await bioAvailable())){ box.hidden = true; return; }
+  box.hidden = false;
+}
+$("bioYes").onclick = async () => {
+  const b = $("bioYes"); b.disabled = true;
+  try{
+    const cred = await navigator.credentials.create({publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      rp: {name: "Crypto de poche"},
+      user: {id: crypto.getRandomValues(new Uint8Array(16)), name: "Crypto de poche", displayName: "Crypto de poche"},
+      pubKeyCredParams: [{type: "public-key", alg: -7}, {type: "public-key", alg: -257}],
+      authenticatorSelection: {authenticatorAttachment: "platform", userVerification: "required", residentKey: "discouraged"},
+      timeout: 60000, attestation: "none"}});
+    ls.set("bioId", b64e(cred.rawId));
+    $("bioAsk").hidden = true; note("Empreinte activée : elle te sera demandée à l'ouverture, le code reste possible.");
+    setTimeout(() => note(null), 4000);
+  }catch(e){ note("Empreinte non activée" + (e && e.name === "NotAllowedError" ? " (annulé)." : " : " + e.message), true); }
+  b.disabled = false;
+};
+$("bioNo").onclick = () => { ls.set("bioNo", "1"); $("bioAsk").hidden = true; };
+$("bioBtn").onclick = bioUnlock;
+
+lockHint(); dots(); tryBio();
+try{ sessionStorage.removeItem("unlocked"); }catch(_){}
 $("pad").addEventListener("pointerdown", e => { const b = e.target.closest("button"); if (b && !b.classList.contains("ghost")){ e.preventDefault(); press(b.textContent.trim()); } });
 $("pad").addEventListener("click", e => { if (e.detail === 0){ const b = e.target.closest("button"); if (b && !b.classList.contains("ghost")) press(b.textContent.trim()); } });
 document.addEventListener("keydown", e => { if ($("lock").hidden) return; if (/^[0-9]$/.test(e.key)) press(e.key); else if (e.key === "Backspace") press("⌫"); });
-if (ss.get("unlocked") === "1") unlock();
+// Reverrouillage : retour après 30 s en arrière-plan, ou page restaurée depuis le cache du navigateur.
+let hiddenAt = 0;
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden"){ hiddenAt = Date.now(); return; }
+  if (hiddenAt && Date.now() - hiddenAt > 30000 && $("lock").hidden) lock();
+  else if (!$("lock").hidden) tryBio();
+  hiddenAt = 0;
+});
+window.addEventListener("pageshow", e => { if (e.persisted && $("lock").hidden) lock(); });
 
 // Revenir sur l'appli après un moment : on rafraîchit si les prix ont plus de 2 minutes.
 document.addEventListener("visibilitychange", () => {
