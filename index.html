@@ -990,7 +990,15 @@ async function press(k){
   entry += k; dots(); $("lockmsg").textContent = "";
   if (entry.length < needLen()) return;
   if (hasPin() && !migrating){
-    if (await sha(ls.get("pinSalt") + ":" + entry) !== ls.get("pinHash")) return fail("Code incorrect");
+    const wait = Number(ls.get("pinLockUntil") || 0) - Date.now();
+    if (wait > 0) return fail("Trop d'essais, réessaie dans " + Math.ceil(wait/1000) + " s");
+    if (await sha(ls.get("pinSalt") + ":" + entry) !== ls.get("pinHash")){
+      // Blocage après 5 codes faux : 30 s, puis 1 min, 2 min… à chaque nouvelle erreur.
+      const n = Number(ls.get("pinFails") || 0) + 1; ls.set("pinFails", String(n));
+      if (n >= 5){ const s = 30 * Math.pow(2, Math.min(n - 5, 8)); ls.set("pinLockUntil", String(Date.now() + s*1000)); return fail("Trop d'essais, réessaie dans " + s + " s"); }
+      return fail("Code incorrect" + (n >= 3 ? ` (encore ${5 - n} essai${5 - n > 1 ? "s" : ""})` : ""));
+    }
+    ls.set("pinFails", "0"); ls.set("pinLockUntil", "0");
     if (storedLen() < PIN_LEN){ migrating = true; entry = ""; setTimeout(() => { dots(); lockHint(); }, 150); return; } // passage au code à 6 chiffres
     return unlock();
   }
