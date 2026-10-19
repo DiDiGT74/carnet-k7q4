@@ -118,8 +118,8 @@ button:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
 
 
 /* Onglets */
-.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:4;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;margin:-8px 0 -6px;border-radius:16px;background:rgba(38,28,53,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line)}
-.tabs button{min-width:0;border:0;border-radius:12px;padding:10px 6px;background:transparent;color:var(--mist);font-weight:600;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background 180ms ease,color 180ms ease}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:4;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:4px;margin:-8px 0 -6px;border-radius:16px;background:rgba(38,28,53,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line)}
+.tabs button{min-width:0;border:0;border-radius:12px;padding:10px 0;background:transparent;color:var(--mist);font-weight:600;font-size:.8rem;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background 180ms ease,color 180ms ease}
 .tabs button[aria-selected="true"]{background:linear-gradient(135deg,#7C5CFF,#A98DFF);color:#160F24}
 .view{display:flex;flex-direction:column;gap:26px}
 .view.fade{animation:viewIn 260ms var(--ease-out)}
@@ -141,6 +141,28 @@ button:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
 .spark{display:block;width:100%;height:46px;overflow:visible}
 .af{font-size:.8rem;color:var(--mist);line-height:1.45}
 .af b{color:var(--lavender);font-weight:600}
+
+/* Change CHF */
+.chip.sig{font-size:.78rem;padding:4px 10px;letter-spacing:.02em}
+.sig.good{background:rgba(95,211,160,.16);color:var(--mint)}
+.sig.ok{background:rgba(247,200,115,.15);color:#F7C873}
+.sig.wait{background:rgba(255,122,133,.14);color:var(--coral)}
+.cwin{width:100%;display:grid;gap:10px;justify-items:center;text-align:center;background:var(--aubergine);border-radius:16px;padding:14px}
+.cwin .wt{font-size:.9rem;line-height:1.45}
+.cwin .wt b{font-weight:700}
+.cwin .pill{border:0;border-radius:999px;padding:10px 18px;font-weight:700;font-size:.88rem;background:var(--aubergine-2);color:var(--lavender);transition:transform 140ms var(--ease-out),background 160ms ease}
+.cwin .pill.main{background:var(--mint);color:#0E2A1E}
+.cwin .pill:active{transform:scale(.97)}
+.cwin .pill:disabled{opacity:.55}
+.prof svg{display:block;width:100%;height:auto;overflow:visible}
+.cform{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left}
+.cform label{display:grid;gap:4px;color:var(--mist);font-size:.75rem;min-width:0}
+.cform input{width:100%;min-width:0;font:inherit;font-size:16px;color:var(--lavender);background:var(--plum);border:1px solid var(--line);border-radius:12px;padding:10px 10px;color-scheme:dark}
+.cform input:focus{outline:2px solid var(--violet);outline-offset:1px}
+.cform .pill{grid-column:1/-1}
+.pline span:last-child{white-space:nowrap}
+.halo{paint-order:stroke;stroke:#1B1426;stroke-width:4px;stroke-linejoin:round}
+.cacts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 
 /* Patrimoine */
 .legendrow{display:flex;flex-wrap:wrap;gap:6px 14px;color:var(--mist);font-size:.78rem;margin-top:8px}
@@ -262,6 +284,7 @@ button:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
   <nav class="tabs" id="tabs" role="tablist" aria-label="Volets">
     <button type="button" role="tab" data-t="crypto" aria-selected="true">Crypto</button>
     <button type="button" role="tab" data-t="bourse" aria-selected="false">Bourse</button>
+    <button type="button" role="tab" data-t="change" aria-selected="false">Change</button>
     <button type="button" role="tab" data-t="patri" aria-selected="false">Patrimoine</button>
   </nav>
 
@@ -359,6 +382,53 @@ button:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
     <section class="block">
       <h2>Cours des supports</h2>
       <div id="bSupports"></div>
+    </section>
+  </div>
+
+  <div class="view" id="vChange" hidden>
+    <section class="pot" aria-label="Change CHF vers EUR">
+      <div class="ring" id="cRing">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle cx="60" cy="60" r="52" fill="none" stroke="#31253F" stroke-width="9"/>
+          <g id="cArcs"></g>
+        </svg>
+        <div class="center">
+          <div class="sub">1 CHF =</div>
+          <div class="total" id="cRate">—</div>
+          <span class="chip sig" id="cSig"></span>
+          <div class="sub" id="cK"></div>
+        </div>
+      </div>
+      <div class="day" id="cRank"></div>
+      <div class="cwin" id="cWin"></div>
+    </section>
+
+    <section class="curve">
+      <div class="curvehead">
+        <h2>Évolution</h2>
+        <div class="seg" id="segX" role="group" aria-label="Période">
+          <button type="button" data-v="60" aria-pressed="true">60 jours</button>
+          <button type="button" data-v="365" aria-pressed="false">1 an</button>
+        </div>
+      </div>
+      <div id="cChart"></div>
+      <p class="goal" id="cGoal"></p>
+    </section>
+
+    <section class="block prof">
+      <h2>Le jour de change, d'après 3 ans</h2>
+      <div id="cProf"></div>
+      <p class="goal">Écart moyen de chaque jour à la moyenne de sa fenêtre, sur 36 fenêtres (oct. 2023 à sept. 2026). Le 25 au 28 sont en général un peu plus bas, le 1er au 6 un peu plus hauts : environ 2 € de mieux pour 1 000 CHF. Mais entre le meilleur et le pire jour d'une même fenêtre, l'écart moyen est de <b>1,2 %</b> (environ 12 € pour 1 000 CHF) : le signal compte bien plus que la date.</p>
+    </section>
+
+    <section class="block">
+      <h2>Mes changes</h2>
+      <div id="cJour"></div>
+    </section>
+
+    <section class="block">
+      <h2>Repères</h2>
+      <div id="cRefs"></div>
     </section>
   </div>
 
@@ -627,14 +697,14 @@ async function save(){
   } catch(e){ note(e.message, true); }
   finally{ setBusy(false, btn); }
 }
-$("refresh").onclick = () => tab === "bourse" ? loadBourse(true, $("refresh")) : tab === "patri" ? loadPatri(true, $("refresh")) : load(true, $("refresh"));
+$("refresh").onclick = () => tab === "bourse" ? loadBourse(true, $("refresh")) : tab === "patri" ? loadPatri(true, $("refresh")) : tab === "change" ? loadChange(true, $("refresh")) : load(true, $("refresh"));
 $("save").onclick = save;
 
 
 // ---------- Onglets : Crypto (par défaut), Bourse, Patrimoine ----------
 let tab = "crypto";
-const VIEWS = {crypto:"vCrypto", bourse:"vBourse", patri:"vPatri"};
-const statusOf = {crypto:null, bourse:null, patri:null};
+const VIEWS = {crypto:"vCrypto", bourse:"vBourse", change:"vChange", patri:"vPatri"};
+const statusOf = {crypto:null, bourse:null, change:null, patri:null};
 function setStatus(which, live, text){ statusOf[which] = {live, text}; if (which === tab) applyStatus(); }
 function applyStatus(){ const s = statusOf[tab]; $("status").classList.toggle("live", !!(s && s.live)); $("asof").textContent = s ? s.text : "Chargement"; }
 function showTab(t){
@@ -644,6 +714,7 @@ function showTab(t){
   applyStatus(); note(null); window.scrollTo(0, 0);
   if (t === "bourse" && !bData && KEY()) loadBourse(false);
   if (t === "patri" && !pData && KEY()) loadPatri(false);
+  if (t === "change" && !cData && KEY()) loadChange(false);
 }
 document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => showTab(b.dataset.t));
 
@@ -828,6 +899,143 @@ function renderPatri(d){
   setStatus("patri", false, "Relevé de " + fmtMY(last ? last.t : d.dates[0]));
 }
 
+// ---------- Change CHF → EUR (onglet « Change CHF » du Sheet) ----------
+let cData = null, cView = ls.get("cView") || "60";
+const rateF = (v, d=4) => v == null || isNaN(v) ? "—" : v.toLocaleString("fr-FR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const dm = t => new Date(t).toLocaleDateString("fr-FR",{day:"numeric",month:"short"});
+const SIG = {"Bon moment":"good", "Correct":"ok", "Attendre":"wait"};
+const SIGC = {good:"#5FD3A0", ok:"#F7C873", wait:"#FF7A85"};
+function cChart(d){
+  const now = Date.now(), days = Number(cView);
+  const pts = d.hist.filter(h => h.t >= now - days*864e5);
+  if (d.rate) pts.push({t: now, v: d.rate, live: true});
+  if (pts.length < 2){ $("cChart").innerHTML = '<p class="sub">Historique indisponible.</p>'; return; }
+  const W = 440, H = 190, pt = 18, pb = 24, pr = 0;
+  const refs = [d.seuil, d.avg30].filter(v => v != null);
+  const vals = pts.map(p => p.v).concat(refs), mn = Math.min(...vals), mx = Math.max(...vals), sp = (mx - mn) || .001;
+  const lo = mn - sp*.08, hi = mx + sp*.14, t0 = pts[0].t, t1 = now;
+  const x = t => (t - t0)/(t1 - t0)*(W - pr), y = v => pt + (hi - v)*(H - pt - pb)/(hi - lo);
+  const line = pts.map((p,i) => `${i?"L":"M"}${x(p.t).toFixed(1)},${y(p.v).toFixed(1)}`).join("");
+  const area = line + `L${x(t1).toFixed(1)},${H-pb}L${x(t0).toFixed(1)},${H-pb}Z`;
+  // Bandes des fenêtres de change (25 → 6) visibles dans la période
+  let bands = "";
+  const s0 = new Date(t0); for (let k = -1; k <= 13; k++){
+    const a = new Date(s0.getFullYear(), s0.getMonth() + k, 25).getTime(), b = new Date(s0.getFullYear(), s0.getMonth() + k + 1, 6, 23, 59).getTime();
+    if (b < t0 || a > t1) continue;
+    const xa = Math.max(0, x(a)), xb = Math.min(W, x(b));
+    bands += `<rect x="${xa.toFixed(1)}" y="${pt}" width="${Math.max(0, xb - xa).toFixed(1)}" height="${H - pt - pb}" fill="#9B7BFF" fill-opacity=".07"/>`;
+  }
+  const hline = (v, col, lab, anchorEnd) => v == null ? "" : `<line x1="0" x2="${W}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="${col}" stroke-opacity=".8" stroke-dasharray="3 5"/>
+    <text class="halo" x="${anchorEnd ? W : 4}" y="${(y(v) - 5).toFixed(1)}" font-size="10.5" fill="${col}" text-anchor="${anchorEnd ? "end" : "start"}" ${TXT}>${lab} ${rateF(v)}</text>`;
+  const last = pts[pts.length-1], sc = SIGC[SIG[d.signal]] || "#5FD3A0";
+  $("cChart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Taux CHF vers EUR sur ${days === 60 ? "60 jours" : "1 an"}">
+    <defs><linearGradient id="cg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9B7BFF" stop-opacity=".3"/><stop offset="1" stop-color="#9B7BFF" stop-opacity="0"/></linearGradient></defs>
+    ${bands}
+    <path d="${area}" fill="url(#cg1)"/>
+    ${hline(d.avg30, "#A99DBE", "moy. 30 j", false)}
+    ${hline(d.seuil, "#5FD3A0", "bon moment ≥", true)}
+    <path d="${line}" fill="none" stroke="#9B7BFF" stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${x(last.t)}" cy="${y(last.v)}" r="4.5" fill="${sc}"/>
+    <text x="0" y="${H-6}" font-size="10.5" fill="#A99DBE" ${TXT}>${dm(t0)}</text><text x="${W}" y="${H-6}" font-size="10.5" fill="#A99DBE" text-anchor="end" ${TXT}>aujourd'hui</text>
+  </svg>`;
+  $("cGoal").innerHTML = d.seuil != null
+    ? `Au-dessus de <b>${rateF(d.seuil)}</b>, le taux est dans les 20 % les plus hauts des 60 derniers jours et au-dessus de sa moyenne 30 jours : c'est le signal « Bon moment ». Les bandes claires sont tes fenêtres de change (25 → 6).`
+    : "";
+}
+$("segX").querySelectorAll("button").forEach(b => {
+  b.setAttribute("aria-pressed", b.dataset.v === cView ? "true" : "false");
+  b.onclick = () => { cView = b.dataset.v; ls.set("cView", cView); $("segX").querySelectorAll("button").forEach(z => z.setAttribute("aria-pressed", z === b ? "true" : "false")); if (cData) cChart(cData); };
+});
+function cProfil(d){
+  const prof = d.profil || [], W = 440, H = 130, top = 16, bot = 22, n = prof.length;
+  if (!n){ $("cProf").innerHTML = ""; return; }
+  const mx = Math.max(...prof.map(p => Math.abs(p[1]))) || 1, mid = top + (H - top - bot)/2, half = (H - top - bot)/2;
+  const bw = W / n, today = String(new Date().getDate()).padStart(2, "0"), open = d.fenetre && d.fenetre.ouverte;
+  const bars = prof.map((p,i) => {
+    const h = Math.abs(p[1])/mx*half, yy = p[1] >= 0 ? mid - h : mid, cx = i*bw + bw/2, on = open && p[0] === today;
+    return `<rect x="${(i*bw + bw*.18).toFixed(1)}" y="${yy.toFixed(1)}" width="${(bw*.64).toFixed(1)}" height="${Math.max(1.5, h).toFixed(1)}" rx="3" fill="${p[1] >= 0 ? "#5FD3A0" : "#FF7A85"}" fill-opacity="${on ? 1 : .7}" ${on ? 'stroke="#EDE6FA" stroke-width="1.5"' : ""}/>
+      <text x="${cx.toFixed(1)}" y="${H-6}" font-size="10.5" fill="${on ? "#EDE6FA" : "#A99DBE"}" font-weight="${on ? 700 : 500}" text-anchor="middle" ${TXT}>${p[0]}</text>`;
+  }).join("");
+  $("cProf").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Écart moyen par jour de la fenêtre de change"><line x1="0" x2="${W}" y1="${mid}" y2="${mid}" stroke="#3A2E4A"/>
+    <text x="0" y="10" font-size="10.5" fill="#A99DBE" ${TXT}>+${mx.toLocaleString("fr-FR",{maximumFractionDigits:2})} %</text>${bars}</svg>`;
+}
+function isoDay(t){ const x = new Date(t); return x.getFullYear() + "-" + String(x.getMonth()+1).padStart(2,"0") + "-" + String(x.getDate()).padStart(2,"0"); }
+function cWin(d){
+  const w = d.fenetre || {}, fin = w.fin ? dm(w.fin) : "";
+  const cur = (d.journal || []).filter(j => j.t >= w.debut && j.t <= w.fin).slice(-1)[0];
+  let head;
+  if (cur){
+    const next = new Date(new Date(w.debut).getFullYear(), new Date(w.debut).getMonth() + 1, 25).getTime();
+    head = `<div class="wt">Changé le <b>${dm(cur.t)}</b> à <b>${rateF(cur.taux)}</b>${cur.marche ? ` (marché ${rateF(cur.marche)}, ${pct(cur.ecartMarche, 2)})` : ""}. Plus d'alerte avant le ${dm(next).replace(/\.$/, "")}.</div>`;
+  } else if (w.ouverte){
+    const left = Math.max(0, Math.ceil((w.fin - Date.now())/864e5));
+    head = `<div class="wt">Fenêtre de change ouverte jusqu'au <b>${fin}</b> (${left} jour${left > 1 ? "s" : ""}).</div>`;
+  } else head = `<div class="wt">Prochaine fenêtre : du <b>${dm(w.debut)}</b> au <b>${fin}</b>. Tu recevras une alerte s'il y a un bon moment.</div>`;
+  const form = `<div class="cform" id="cForm" ${cur ? "hidden" : ""}>
+      <label>Date du change<input type="date" id="cDate" value="${isoDay(Date.now())}" max="${isoDay(Date.now())}"></label>
+      <label>Taux de ta banque<input type="text" id="cTaux" inputmode="decimal" autocomplete="off" placeholder="${rateF(d.rate)}"></label>
+      <button class="pill main" id="cSave" type="button">Enregistrer mon change</button>
+    </div>`;
+  const acts = cur ? `<div class="cacts"><button class="pill" id="cMore" type="button">Autre change</button><button class="pill" id="cUndo" type="button">Annuler ce change</button></div>` : "";
+  $("cWin").innerHTML = head + form + acts;
+  const more = $("cMore"); if (more) more.onclick = () => { $("cForm").hidden = false; more.parentElement.hidden = true; };
+  const undo = $("cUndo");
+  if (undo) undo.onclick = () => {
+    if (!undo.dataset.arm){ undo.dataset.arm = "1"; undo.textContent = "Toucher pour confirmer"; setTimeout(() => { if (undo.isConnected){ delete undo.dataset.arm; undo.textContent = "Annuler ce change"; } }, 4000); return; }
+    markChange({annuler: true}, undo);
+  };
+  $("cSave").onclick = () => {
+    const taux = Number(String($("cTaux").value).trim().replace(/\s/g, "").replace(",", "."));
+    const date = $("cDate").value;
+    if (!date) return note("Indique la date du change.", true);
+    if (!(taux > 0.5 && taux < 2)) return note("Indique le taux de ta banque, par exemple 1,0812.", true);
+    markChange({date, taux}, $("cSave"));
+  };
+}
+function cJournal(d){
+  const j = (d.journal || []).slice().reverse();
+  if (!j.length){ $("cJour").innerHTML = '<p class="sub">Aucun change enregistré pour l\'instant. Ils apparaîtront ici avec la comparaison au taux du marché et au meilleur taux de leur fenêtre.</p>'; return; }
+  const avg = a => { const v = a.filter(x => x != null); return v.length ? v.reduce((s,x) => s + x, 0)/v.length : null; };
+  const done = j.filter(x => x.fin && x.fin < Date.now());
+  const sum = `<div class="pline tot"><span>Taux moyen obtenu</span><span>${rateF(avg(j.map(x => x.taux)))}</span></div>
+    <div class="pline"><span>Ta banque vs le marché</span><span class="${tone(avg(j.map(x => x.ecartMarche)))}">${pct(avg(j.map(x => x.ecartMarche)), 2) || "—"}</span></div>
+    <div class="pline"><span>Écart moyen vs le meilleur jour</span><span>${done.length ? pct(avg(done.map(x => x.ecartBest)), 2) : "—"}</span></div>`;
+  const rows = j.map(x => {
+    const closed = x.fin && x.fin < Date.now();
+    return `<div class="acct"><div class="ah"><div><div class="an">${fmtDay(x.t)}</div><div class="px">Marché ce jour : ${rateF(x.marche)}${x.ecartMarche != null ? `, ${pct(x.ecartMarche, 2)}` : ""}</div></div>
+      <div class="r"><div class="val">${rateF(x.taux)}</div><div class="pl">${x.bestFen ? `${closed ? "meilleur" : "meilleur à ce jour"} ${rateF(x.bestFen)}` : ""}</div></div></div>
+      ${x.bestFen ? `<div class="af">Fenêtre du ${dm(x.debut)} au ${dm(x.fin)} : moyenne <b>${rateF(x.moyFen)}</b>, ton taux est à <b>${pct(x.ecartBest, 2)}</b> du meilleur.</div>` : ""}</div>`;
+  }).join("");
+  $("cJour").innerHTML = sum + rows;
+}
+async function markChange(p, btn){
+  btn.disabled = true;
+  try{ const d = await api("changeFait", p); renderChange(d); ls.set("lastChange", JSON.stringify(d)); note(null); }
+  catch(e){ note(e.message, true); btn.disabled = false; }
+}
+function renderChange(d){
+  cData = d;
+  const k = SIG[d.signal] || "wait";
+  $("cRate").textContent = rateF(d.rate) + " €";
+  const sg = $("cSig"); sg.className = "chip sig " + k; sg.textContent = d.signal || "—";
+  $("cK").textContent = d.rate ? "1 000 CHF = " + Math.round(d.rate*1000).toLocaleString("fr-FR") + " €" : "";
+  const r = d.rank60 == null ? 0 : Math.max(0, Math.min(1, d.rank60));
+  multiRing("cArcs", [{v: Math.max(r, .01), color: SIGC[k]}, {v: Math.max(0, 1 - r), color: "transparent"}]);
+  $("cRing").classList.add("on");
+  $("cRank").innerHTML = d.rank60 != null ? `Plus haut que <b>${Math.round(r*100)} %</b> des 60 derniers jours, ${pct(d.gap30, 2)} vs la moyenne 30 jours` : "";
+  cWin(d); cChart(d); cProfil(d); cJournal(d);
+  const line = (l, v) => `<div class="pline"><span>${l}</span><span>${v}</span></div>`;
+  $("cRefs").innerHTML = line("Moyenne 30 jours", rateF(d.avg30)) + line("Moyenne 90 jours", rateF(d.avg90)) + line("Moyenne 1 an", rateF(d.avg1y))
+    + line("Plus haut 1 an", rateF(d.hi)) + line("Plus bas 1 an", rateF(d.lo));
+  setStatus("change", true, "Taux du " + dm(d.at) + ", " + new Date(d.at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}));
+}
+async function loadChange(force, btn){
+  if (btn){ if (busy) return; setBusy(true, btn); }
+  try{ const d = await api("change"); renderChange(d); ls.set("lastChange", JSON.stringify(d)); if (tab === "change") note(null); }
+  catch(e){ if (tab === "change") note(e.message, true); }
+  finally{ if (btn) setBusy(false, btn); }
+}
+
 async function loadBourse(force, btn){
   if (btn){ if (busy) return; setBusy(true, btn); }
   try{ const d = await api("bourse"); renderBourse(d); ls.set("lastBourse", JSON.stringify(d)); if (tab === "bourse") note(null); }
@@ -840,7 +1048,7 @@ async function loadPatri(force, btn){
   catch(e){ if (tab === "patri") note(e.message, true); }
   finally{ if (btn) setBusy(false, btn); }
 }
-function prefetch(){ if (!KEY()) return; loadBourse(false).then(() => loadPatri(false)); }
+function prefetch(){ if (!KEY()) return; loadBourse(false).then(() => loadChange(false)).then(() => loadPatri(false)); }
 
 
 // ---------- Alertes et bilans (onglet Notifs du Sheet) ----------
@@ -968,6 +1176,7 @@ function unlock(){
   const cached = ls.get("lastData"); if (cached){ try{ render(JSON.parse(cached)); }catch(_){} }
   try{ const cb = ls.get("lastBourse"); if (cb) renderBourse(JSON.parse(cb)); }catch(_){}
   try{ const cp = ls.get("lastPatri"); if (cp) renderPatri(JSON.parse(cp)); }catch(_){}
+  try{ const cx = ls.get("lastChange"); if (cx) renderChange(JSON.parse(cx)); }catch(_){}
   offerBio();
   if (!KEY()){ note("Cette appli n'est pas encore reliée à ton Sheet. Ouvre une fois le lien d'installation que Claude t'a donné.", true); return; }
   load(false).then(prefetch);
