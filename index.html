@@ -865,7 +865,9 @@ function renderBourse(d){
       ${lines}${pr.close ? spark(a) : ""}<div class="af">${foot}</div></div>`;
   }).join("");
   $("bSupports").innerHTML = d.supports.map(s => `<div class="asset"><div><div class="sym">${esc(s.name)}</div><div class="px">${esc(s.isin)}, ${esc(s.type)}</div></div><div><div class="val">${eur2(s.price)}</div><div class="pl sub">${s.at ? new Date(s.at).toLocaleDateString("fr-FR",{day:"numeric",month:"short"}) : ""}</div></div></div>`).join("");
-  setStatus("bourse", false, d.at ? "Cours du " + new Date(d.at).toLocaleDateString("fr-FR",{day:"numeric",month:"short"}) : "Cours du Sheet");
+  const cd = d.supports.map(s => s.at).filter(Boolean), cf = t => new Date(t).toLocaleDateString("fr-FR",{day:"numeric",month:"short"});
+  const cMax = cd.length ? cf(Math.max(...cd)) : "", cMin = cd.length ? cf(Math.min(...cd)) : "";
+  setStatus("bourse", false, cd.length ? "Cours du " + cMax + (cMin !== cMax ? " (fonds au " + cMin + ")" : "") : "Cours du Sheet");
 }
 
 // ---------- Patrimoine ----------
