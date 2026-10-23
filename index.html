@@ -124,6 +124,10 @@ button:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
 .view{display:flex;flex-direction:column;gap:26px}
 .view.fade{animation:viewIn 260ms var(--ease-out)}
 @keyframes viewIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.view.fade.fromR{animation:viewInR 240ms var(--ease-out)}
+.view.fade.fromL{animation:viewInL 240ms var(--ease-out)}
+@keyframes viewInR{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes viewInL{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
 
 /* Comptes bourse */
 .acct{padding:14px 0;border-top:1px solid var(--line);display:grid;gap:8px}
@@ -709,16 +713,42 @@ const VIEWS = {crypto:"vCrypto", bourse:"vBourse", change:"vChange", patri:"vPat
 const statusOf = {crypto:null, bourse:null, change:null, patri:null};
 function setStatus(which, live, text){ statusOf[which] = {live, text}; if (which === tab) applyStatus(); }
 function applyStatus(){ const s = statusOf[tab]; $("status").classList.toggle("live", !!(s && s.live)); $("asof").textContent = s ? s.text : "Chargement"; }
-function showTab(t){
+function showTab(t, dir){
   if (t === tab) return; tab = t;
   document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.t === t ? "true" : "false"));
-  for (const k in VIEWS){ const v = $(VIEWS[k]); v.hidden = k !== t; if (k === t && !reduceMotion){ v.classList.remove("fade"); void v.offsetWidth; v.classList.add("fade"); } }
+  for (const k in VIEWS){ const v = $(VIEWS[k]); v.hidden = k !== t; if (k === t && !reduceMotion){ v.classList.remove("fade", "fromR", "fromL"); void v.offsetWidth; v.classList.add("fade"); if (dir) v.classList.add(dir > 0 ? "fromR" : "fromL"); } }
   applyStatus(); note(null); window.scrollTo(0, 0);
   if (t === "bourse" && !bData && KEY()) loadBourse(false);
   if (t === "patri" && !pData && KEY()) loadPatri(false);
   if (t === "change" && !cData && KEY()) loadChange(false);
 }
 document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => showTab(b.dataset.t));
+// Glisser le doigt à gauche ou à droite pour changer d'onglet (pas sur les graphiques ni les zones qui défilent)
+(() => {
+  const order = Object.keys(VIEWS);
+  let sx = 0, sy = 0, st = 0, ok = false;
+  const blocked = el => {
+    for (let e = el; e && e !== document.body; e = e.parentElement){
+      if (e.matches && e.matches("svg, input, textarea, select, .segwrap, .lock, .inbox, [data-noswipe]")) return true;
+      const ox = getComputedStyle(e).overflowX;
+      if ((ox === "auto" || ox === "scroll") && e.scrollWidth > e.clientWidth + 2) return true;
+    }
+    return false;
+  };
+  document.addEventListener("touchstart", e => {
+    ok = e.touches.length === 1 && $("lock").hidden && $("inbox").hidden && !blocked(e.target);
+    if (!ok) return;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now();
+  }, {passive: true});
+  document.addEventListener("touchend", e => {
+    if (!ok) return; ok = false;
+    const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+    if (Date.now() - st > 700 || Math.abs(dx) < 60 || Math.abs(dx) < 1.8 * Math.abs(dy)) return;
+    const i = order.indexOf(tab) + (dx < 0 ? 1 : -1);
+    if (i < 0 || i >= order.length) return;
+    showTab(order[i], dx < 0 ? 1 : -1);
+  }, {passive: true});
+})();
 
 // Anneau à plusieurs parts (bourse, patrimoine)
 function multiRing(gId, parts){
