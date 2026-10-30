@@ -218,6 +218,19 @@ button:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
 .nitem.read .ntitle i{visibility:hidden}
 .nmsg{color:#CFC5E2;font-size:.86rem;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
 .nmsg.open{-webkit-line-clamp:unset;display:block}
+.nitem{cursor:pointer}
+.nitem .nmsg{-webkit-line-clamp:2}
+.nmore{color:var(--violet-soft);font-size:.76rem;font-weight:600}
+.nview{position:fixed;inset:0;z-index:16;background:rgba(10,6,16,.62);display:flex;align-items:flex-end;justify-content:center;animation:fadeIn 200ms ease-out}
+.nview[hidden]{display:none}
+.nview .card{background:var(--aubergine);width:100%;max-width:520px;max-height:90vh;overflow-y:auto;overscroll-behavior:contain;border-radius:22px 22px 0 0;
+  padding:18px 22px calc(30px + env(safe-area-inset-bottom,0px));animation:sheetIn 260ms var(--ease-out)}
+.nview .grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 12px}
+.nview .vhead{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.nview h3{font-family:var(--display);font-weight:500;font-size:1.2rem;line-height:1.4;margin:12px 0 18px;color:var(--lavender)}
+.nview .vbody p{margin:0 0 14px;font-size:1rem;line-height:1.7;color:#E2DAF2}
+.nview .vbody p.piste{background:var(--aubergine-2);border-left:3px solid var(--violet);border-radius:10px;padding:12px 14px;color:var(--lavender)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .nitem.ras{opacity:.55}
 .lv-urgent .bar4{background:var(--coral)}.lv-urgent .lvl{color:var(--coral)}
 .lv-important .bar4{background:#FFB36B}.lv-important .lvl{color:#FFB36B}
@@ -483,6 +496,7 @@ button:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
     <div id="nlist"></div>
   </div>
 </section>
+<section class="nview" id="nview" hidden role="dialog" aria-modal="true" aria-label="Détail de la notification"><div class="card" id="nviewCard"></div></section>
 
 <nav class="bar" aria-label="Actions">
   <div class="in">
@@ -1140,12 +1154,12 @@ function renderNotifs(d){
   nData = d; setBadge(d.unread || 0);
   const items = d.items || [];
   $("readAll").disabled = !items.some(n => !n.read);
-  $("nlist").innerHTML = items.length ? items.map(n => {
+  $("nlist").innerHTML = items.length ? items.map((n, i) => {
     const k = lvKey(n.lvl);
-    return `<article class="nitem lv-${k}${n.read ? " read" : ""}${k === "ras" ? " ras" : ""}"><span class="bar4"></span><div class="nb">
+    return `<article class="nitem lv-${k}${n.read ? " read" : ""}${k === "ras" ? " ras" : ""}" data-i="${i}"><span class="bar4"></span><div class="nb">
       <div class="nmeta"><span class="lvl">${esc(LV[k])}</span><span>${esc(n.src)}</span><span>${esc(whenTxt(n.t))}</span></div>
       <div class="ntitle"><i aria-hidden="true"></i><span>${esc(n.title)}</span></div>
-      ${n.msg ? `<div class="nmsg money">${esc(n.msg)}</div>` : ""}</div></article>`;
+      ${n.msg ? `<div class="nmsg money">${esc(n.msg)}</div><span class="nmore">Lire</span>` : ""}</div></article>`;
   }).join("") : '<p class="empty">Rien pour l\'instant. La veille, les bilans et les revues arriveront ici.</p>';
 }
 async function loadNotifs(){
@@ -1193,8 +1207,30 @@ $("readAll").onclick = async () => {
   if (nData){ nData.items.forEach(n => n.read = true); nData.unread = 0; renderNotifs(nData); }
   try{ const d = await api("lu", {rows: []}); renderNotifs(d); ls.set("lastNotifs", JSON.stringify(d)); }catch(e){ note(e.message, true); }
 };
-$("nlist").addEventListener("click", e => { const m = e.target.closest(".nmsg"); if (m) m.classList.toggle("open"); });
-document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("inbox").hidden) closeInbox(); });
+// Détail d'une notification : texte découpé en paragraphes, la piste mise en avant.
+function paras(t){
+  const s = String(t || "").replace(/\s+(?=(Piste|Fiscalité|Rappel|Macro|Limite|Réglementation|Détail|Prudence|À noter)\s?:)/g, "\n");
+  const out = [];
+  s.split(/\n+/).forEach(block => {
+    const sent = block.trim().split(/(?<=[.!?])\s+(?=[A-ZÀÂÉÈÊÎÔÛÇ«(])/);
+    for (let j = 0; j < sent.length; j += 2) out.push(sent.slice(j, j + 2).join(" ").trim());
+  });
+  return out.filter(Boolean);
+}
+function openNotif(i){
+  const n = nData && nData.items && nData.items[i]; if (!n) return;
+  const k = lvKey(n.lvl), card = $("nviewCard");
+  card.className = "card lv-" + k;
+  card.innerHTML = `<div class="grab"></div><div class="vhead"><div class="nmeta"><span class="lvl">${esc(LV[k])}</span><span>${esc(n.src)}</span><span>${esc(whenTxt(n.t))}</span></div>
+    <button class="iclose" id="nviewClose" type="button" aria-label="Fermer">✕</button></div>
+    <h3>${esc(n.title)}</h3><div class="vbody money">${paras(n.msg).map(p => `<p${/^Piste/.test(p) ? ' class="piste"' : ""}>${esc(p)}</p>`).join("")}</div>`;
+  $("nview").hidden = false; card.scrollTop = 0;
+  $("nviewClose").onclick = closeNotif;
+}
+function closeNotif(){ $("nview").hidden = true; }
+$("nview").addEventListener("click", e => { if (e.target === $("nview")) closeNotif(); });
+$("nlist").addEventListener("click", e => { const a = e.target.closest(".nitem"); if (a && a.dataset.i != null) openNotif(Number(a.dataset.i)); });
+document.addEventListener("keydown", e => { if (e.key !== "Escape") return; if (!$("nview").hidden) closeNotif(); else if (!$("inbox").hidden) closeInbox(); });
 if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", e => { if (e.data && e.data.open === "notifs"){ if (started) openInbox(); else inboxWanted = true; } });
 function startNotifs(){
   try{ const c = ls.get("lastNotifs"); if (c) renderNotifs(JSON.parse(c)); }catch(_){}
