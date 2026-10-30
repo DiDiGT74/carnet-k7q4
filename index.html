@@ -212,7 +212,9 @@ button:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
 .nmeta .lvl{font-weight:700;letter-spacing:.03em;text-transform:uppercase;font-size:.66rem}
 .ntitle{font-weight:700;font-size:.95rem;line-height:1.35;display:flex;gap:8px;align-items:flex-start}
 .ntitle i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--violet);margin-top:6px}
-.nitem.read .ntitle{font-weight:600;color:#D6CCEA}
+.nitem.read .ntitle{font-weight:500;color:var(--mist)}
+.nitem.read .bar4,.nitem.read .lvl{opacity:.35}
+.nitem.read .nmsg{opacity:.7}
 .nitem.read .ntitle i{visibility:hidden}
 .nmsg{color:#CFC5E2;font-size:.86rem;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
 .nmsg.open{-webkit-line-clamp:unset;display:block}
@@ -1156,7 +1158,7 @@ function pushState(){
     btn.hidden = true; info.textContent = "Pour recevoir les alertes en notification, installe l'appli sur l'écran d'accueil puis rouvre-la depuis l'icône."; return;
   }
   const p = Notification.permission;
-  if (p === "granted" && ls.get("pushOn") === "1"){ btn.hidden = false; btn.textContent = "Notifications activées"; btn.disabled = true; info.textContent = "Tu reçois une notification à chaque alerte ou bilan. Le titre ne contient jamais de montant."; }
+  if (p === "granted" && ls.get("pushOn") === "1"){ btn.hidden = false; btn.textContent = "Réactiver les notifications"; btn.disabled = false; info.textContent = "Notifications activées. Si elles n'arrivent plus sur ce téléphone, touche « Réactiver ». Le titre ne contient jamais de montant."; }
   else if (p === "denied"){ btn.hidden = true; info.textContent = "Les notifications sont bloquées pour cette appli. Réautorise-les dans les réglages du téléphone (notifications de l'appli), puis reviens ici."; }
   else { btn.hidden = false; btn.disabled = false; btn.textContent = "Activer les notifications"; info.textContent = "Active-les pour être prévenu sur ce téléphone, même appli fermée."; }
 }
@@ -1169,7 +1171,7 @@ async function enablePush(){
     const reg = await navigator.serviceWorker.ready;
     const {pub} = await api("vapid");
     let sub = await reg.pushManager.getSubscription();
-    if (sub && ls.get("pushKey") !== pub){ await sub.unsubscribe(); sub = null; }
+    if (sub){ try{ await sub.unsubscribe(); }catch(_){} sub = null; }
     if (!sub) sub = await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: b64uBytes(pub)});
     await idbSet("apiKey", KEY()); await idbSet("api", API);
     await api("sub", {endpoint: sub.endpoint});
