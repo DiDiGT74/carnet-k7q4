@@ -3,6 +3,7 @@
   "short_name": "Crypto",
   "description": "La cagnotte crypto, en direct.",
   "lang": "fr",
+  "id": "./?app=2",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
