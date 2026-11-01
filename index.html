@@ -1051,13 +1051,15 @@ function cWin(d){
     const left = Math.max(0, Math.ceil((w.fin - Date.now())/864e5));
     head = `<div class="wt">Fenêtre de change ouverte jusqu'au <b>${fin}</b> (${left} jour${left > 1 ? "s" : ""}).</div>`;
   } else head = `<div class="wt">Prochaine fenêtre : du <b>${dm(w.debut)}</b> au <b>${fin}</b>. Tu recevras une alerte s'il y a un bon moment.</div>`;
+  const ac = d.aChanger, nf = x => Math.round(x).toLocaleString("fr-FR");
+  const amt = ac && ac.chf ? `<div class="wt">À changer : <b>${nf(ac.chf)} CHF</b> (salaire de ${ac.mois})${ac.eur ? `, soit environ ${nf(ac.eur)} € au taux du jour` : ""}.</div>` : "";
   const form = `<div class="cform" id="cForm" ${cur ? "hidden" : ""}>
       <label>Date du change<input type="date" id="cDate" value="${isoDay(Date.now())}" max="${isoDay(Date.now())}"></label>
       <label>Taux de ta banque<input type="text" id="cTaux" inputmode="decimal" autocomplete="off" placeholder="${rateF(d.rate)}"></label>
       <button class="pill main" id="cSave" type="button">Enregistrer mon change</button>
     </div>`;
   const acts = cur ? `<div class="cacts"><button class="pill" id="cMore" type="button">Autre change</button><button class="pill" id="cUndo" type="button">Annuler ce change</button></div>` : "";
-  $("cWin").innerHTML = head + form + acts;
+  $("cWin").innerHTML = head + amt + form + acts;
   const more = $("cMore"); if (more) more.onclick = () => { $("cForm").hidden = false; more.parentElement.hidden = true; };
   const undo = $("cUndo");
   if (undo) undo.onclick = () => {
