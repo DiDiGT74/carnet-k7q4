@@ -1052,7 +1052,7 @@ function cWin(d){
     head = `<div class="wt">Fenêtre de change ouverte jusqu'au <b>${fin}</b> (${left} jour${left > 1 ? "s" : ""}).</div>`;
   } else head = `<div class="wt">Prochaine fenêtre : du <b>${dm(w.debut)}</b> au <b>${fin}</b>. Tu recevras une alerte s'il y a un bon moment.</div>`;
   const ac = d.aChanger, nf = x => Math.round(x).toLocaleString("fr-FR");
-  const amt = ac && ac.chf ? `<div class="wt">À changer : <b>${nf(ac.chf)} CHF</b> (salaire de ${ac.mois})${ac.eur ? `, soit environ ${nf(ac.eur)} € au taux du jour` : ""}.</div>` : "";
+  const amt = ac && ac.chf ? `<div class="wt">À changer : <b class="money">${nf(ac.chf)} CHF</b> (salaire de ${ac.mois})${ac.eur ? `, soit environ <span class="money">${nf(ac.eur)} €</span> au taux du jour` : ""}.</div>` : "";
   const form = `<div class="cform" id="cForm" ${cur ? "hidden" : ""}>
       <label>Date du change<input type="date" id="cDate" value="${isoDay(Date.now())}" max="${isoDay(Date.now())}"></label>
       <label>Taux de ta banque<input type="text" id="cTaux" inputmode="decimal" autocomplete="off" placeholder="${rateF(d.rate)}"></label>
